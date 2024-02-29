@@ -14,7 +14,7 @@ setuptools.setup(
     description="A Python module for parsing and analyzing battery data",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",
+    url="https://github.com/YiLiiu/BatteryABN",
     packages=setuptools.find_packages(),
     install_requires=requirements,
     classifiers=[
