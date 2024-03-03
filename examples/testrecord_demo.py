@@ -1,5 +1,5 @@
 import os
-from batteryabn import Testrecord
+from batteryabn import TestRecord
 
 current_directory = os.path.dirname(__file__)
 
@@ -15,9 +15,4 @@ paths = [
 ]
 
 
-testrecord = Testrecord()
-
-for path in paths:
-    testrecord.parse(path).format()
-    print(f'Test data columns: {testrecord.test_data.columns}')
-    print(f'Cycler data columns: {testrecord.cycler_data.columns}')
+testrecord = TestRecord()

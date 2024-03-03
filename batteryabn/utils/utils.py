@@ -189,4 +189,4 @@ class Utils:
             Formatted dictionary
         """
         logger.info('Format dictionary keys to lower case and strip')
-        return {k.strip(): v for k, v in data.items() if v is not None}
+        return {k.strip(): v.strip() for k, v in data.items() if v is not None}

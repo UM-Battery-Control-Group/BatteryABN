@@ -1,9 +1,10 @@
 import os
 import pytest
 
-from batteryabn.Testrecord import Parser, Formatter
+from batteryabn import Constants
+from batteryabn.utils import Parser, Formatter
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+BASE_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 NEWARE_PATH = os.path.join(BASE_DATA_PATH, 'neware')
 NEWARE_VDF_PATH = os.path.join(BASE_DATA_PATH, 'neware_vdf')
 
@@ -27,6 +28,9 @@ def test_parser_neware():
         formatter.format_metadata(parser.raw_metadata)
 
         assert 'cell temperature (c)' in formatter.test_data.columns
+        for key in Constants.NEWARE_NAME_KEYS:
+            assert key in formatter.metadata
+        assert formatter.cell_name == 'GMJuly2022_CELL002'
 
 @pytest.mark.formatter
 @pytest.mark.neware_vdf
@@ -40,11 +44,14 @@ def test_parser_neware_vdf():
 
     for path in paths:
         parser.parse(path)
-        formatter.format_test_data(parser.raw_cycler_data, parser.test_type, is_cycle=True)
+        formatter.format_test_data(parser.raw_test_data, parser.test_type)
         formatter.format_metadata(parser.raw_metadata)
         
-        assert 'time' in formatter.cycler_data.columns
-        assert 'timestamp' in formatter.cycler_data.columns
-        assert 'voltage(v)' in formatter.cycler_data.columns
-        assert 'current(a)' in formatter.cycler_data.columns
-        assert 'ambient temperature (c)' in formatter.cycler_data.columns
+        assert 'time' in formatter.test_data.columns
+        assert 'timestamp' in formatter.test_data.columns
+        assert 'voltage(v)' in formatter.test_data.columns
+        assert 'current(a)' in formatter.test_data.columns
+        assert 'ambient temperature (c)' in formatter.test_data.columns
+        for key in Constants.NEWARE_VDF_NAME_KEYS:
+            assert key in formatter.metadata
+        assert formatter.cell_name == 'GMJuly2022_CELL002'

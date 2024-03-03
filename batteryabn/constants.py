@@ -41,7 +41,7 @@ class Constants:
                           'ambient temperature (celsius)': 'ambient temperature (c)'}
     ARBIN_NAME_KEYS = [
         "Project Name",
-        "Device ID",
+        "Cell ID",
         "Test Type",
         "Procedure Version",
         "Temperature",
@@ -52,7 +52,7 @@ class Constants:
 
     BIOLOGIC_NAME_KEYS = [
         "Project Name",
-        "Device ID",
+        "Cell ID",
         "Test Type",
         "Procedure Version",
         "Temperature",
@@ -64,7 +64,7 @@ class Constants:
 
     NEWARE_NAME_KEYS = [
         "Project Name",
-        "Device ID",
+        "Cell ID",
         "Test Type",
         "Procedure Version",
         "Temperature",
@@ -81,7 +81,7 @@ class Constants:
 
     NEWARE_VDF_NAME_KEYS = [
         "Project Name",
-        "Device ID",
+        "Cell ID",
         "Test Type",
         "Procedure Version",
         "Temperature",

@@ -1,11 +1,18 @@
 import os
 import pytest
 
-from batteryabn.Testrecord import Parser
+from batteryabn.utils import Parser
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+
+BASE_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 NEWARE_PATH = os.path.join(BASE_DATA_PATH, 'neware')
 NEWARE_VDF_PATH = os.path.join(BASE_DATA_PATH, 'neware_vdf')
+
+@pytest.mark.parser
+def test_bad_file_path():
+    parser = Parser()
+    with pytest.raises(FileNotFoundError):
+        parser.parse('bad_file_path')
 
 @pytest.mark.parser
 @pytest.mark.neware
@@ -37,5 +44,5 @@ def test_parser_neware_vdf():
     for path in paths:
         parser.parse(path)
         assert parser.test_type == 'Neware_Vdf'
-        assert parser.raw_cycler_data.shape[0] > 0
-        assert 'LDC SENSOR'.lower() in parser.raw_cycler_data.columns.str.lower()
+        assert parser.raw_test_data.shape[0] > 0
+        assert 'LDC SENSOR'.lower() in parser.raw_test_data.columns.str.lower()

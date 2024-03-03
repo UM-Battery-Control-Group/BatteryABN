@@ -2,7 +2,7 @@ import os
 import re
 import pandas as pd
 
-from batteryabn import logger, Constants, Utils
+from batteryabn import logger, Constants
 
 class Parser:
     def __init__(self):
@@ -12,7 +12,6 @@ class Parser:
         self.test_name = None
         self.test_type = None
         self.raw_test_data = pd.DataFrame(dtype=object)
-        self.raw_cycler_data = pd.DataFrame(dtype=object)
         self.raw_metadata = {}
         # Define parse functions
         self.parse_functions = {
@@ -106,7 +105,7 @@ class Parser:
         neware_vdf_df, neware_vdf_meta = self.__load_vdf_csv(file_path)
 
         # Store raw test data
-        self.raw_cycler_data = neware_vdf_df
+        self.raw_test_data = neware_vdf_df
         # Store raw metadata
         self.raw_metadata.update(neware_vdf_meta)
 
@@ -279,5 +278,4 @@ class Parser:
         self.test_name = None
         self.test_type = None
         self.raw_test_data = pd.DataFrame(dtype=object)
-        self.raw_cycler_data = pd.DataFrame(dtype=object)
         self.raw_metadata = {}

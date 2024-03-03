@@ -1,6 +1,7 @@
 import pandas as pd
 
-from batteryabn import logger, Constants, Utils
+from batteryabn import logger, Constants
+from batteryabn.utils import Utils
 
 class Formatter:
     def __init__(self, timezone: str = None):
@@ -16,9 +17,36 @@ class Formatter:
         self.timezone = timezone if timezone else Constants.DEFAULT_TIME_ZONE_INFO
 
         self.test_data = pd.DataFrame(dtype=object)
-        self.cycler_data = pd.DataFrame(dtype=object)
+        self.metadata = {}
+        self.cell_name = None # Cell name for the test data
 
-    def format_test_data(self, data: pd.DataFrame, test_type: str, is_cycle: bool = False) -> pd.DataFrame:
+    def format_data(self, data: pd.DataFrame, metadata: pd.DataFrame, test_type: str) -> pd.DataFrame:
+        """
+        Format battery test data and metadata.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Raw battery test data
+
+        metadata : dict
+            Raw battery test metadata
+
+        test_type : str
+            Type of battery test data. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'
+
+        Returns
+        -------
+        pd.DataFrame
+            Formatted battery test data
+        """
+        self.clear()
+        self.format_test_data(data, test_type)
+        self.format_metadata(metadata)
+
+        return self.test_data
+
+    def format_test_data(self, data: pd.DataFrame, test_type: str) -> None:
         """
         Format battery test data.
 
@@ -50,12 +78,9 @@ class Formatter:
 
         #TODO: Check the timestamp column
 
-        if is_cycle:
-            self.cycler_data = df
-        else:
-            self.test_data = df
+        self.test_data = df
 
-    def format_metadata(self, metadata: dict) -> dict:
+    def format_metadata(self, metadata: dict) -> None:
         """
         Format battery test metadata.
 
@@ -67,8 +92,11 @@ class Formatter:
         logger.info('Format battery test metadata')
 
         metadata = Utils.format_dict(metadata)
-
         self.metadata = metadata
+
+        # Get cell name from metadata
+        cell_name = metadata.get('Project Name') + '_' + metadata.get('Cell ID')
+        self.cell_name = cell_name
 
     def clear(self) -> None:
         """
@@ -76,3 +104,4 @@ class Formatter:
         """
         self.test_data = pd.DataFrame(dtype=object)
         self.metadata = {}
+        self.cell_name = None

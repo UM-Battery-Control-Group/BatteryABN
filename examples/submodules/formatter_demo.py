@@ -1,5 +1,5 @@
 import os
-from batteryabn.Testrecord import Parser, Formatter
+from batteryabn.utils import Parser, Formatter
 
 current_directory = os.path.dirname(__file__)
 
@@ -25,10 +25,12 @@ for path in neware_test_paths:
     formatter.format_metadata(parser.raw_metadata)
 
     print(formatter.test_data.head())
+    print(formatter.metadata)
 
 for path in neware_vdf_test_paths:
     parser.parse(path)
-    formatter.format_test_data(parser.raw_cycler_data, parser.test_type, is_cycle=True)
+    formatter.format_test_data(parser.raw_test_data, parser.test_type)
     formatter.format_metadata(parser.raw_metadata)
 
-    print(formatter.cycler_data.head())
+    print(formatter.metadata)
+    print(formatter.cell_name)

@@ -1,5 +1,5 @@
 import os
-from batteryabn.Testrecord import Parser
+from batteryabn.utils import Parser
 
 current_directory = os.path.dirname(__file__)
 
@@ -17,5 +17,5 @@ parser = Parser()
 
 for path in paths:
     parser.parse(path)
-    print(parser.raw_test_data.columns)
-    print(parser.raw_cycler_data.columns)
+    # print(parser.raw_test_data.columns)
+    print(parser.raw_metadata)
