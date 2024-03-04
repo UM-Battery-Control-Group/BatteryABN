@@ -4,7 +4,7 @@ import pytest
 from batteryabn import Constants
 from batteryabn.utils import Parser, Formatter
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+BASE_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
 NEWARE_PATH = os.path.join(BASE_DATA_PATH, 'neware')
 NEWARE_VDF_PATH = os.path.join(BASE_DATA_PATH, 'neware_vdf')
 

@@ -5,7 +5,10 @@ import pickle
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from batteryabn.models import TestRecord, Cell, create_test_record, create_cell
+from batteryabn.models import TestRecord, Cell
+from batteryabn.repositories import TestRecordRepository, CellRepository
+from batteryabn.services import TestRecordService
+
 from batteryabn.utils import Parser, Formatter
 from batteryabn.models.base import Base
 
@@ -28,6 +31,9 @@ def db_session():
 def test_test_record_integration(db_session):
     parser = Parser()
     formatter = Formatter()
+    cell_repository = CellRepository(db_session)
+    test_record_repository = TestRecordRepository(db_session)
+    test_record_service = TestRecordService(cell_repository, test_record_repository)
 
     paths = [
         os.path.join(NEWARE_PATH, 'GMJuly2022_CELL002_RPT_3_P0C_5P0PSI_20230110_R0_CH041_20230110143333_37_2_1_2818580185.xlsx'),
@@ -37,7 +43,7 @@ def test_test_record_integration(db_session):
     ]
 
     for path in paths:
-        create_test_record(path, parser, formatter, db_session)
+        test_record_service.create_and_save_tr(path, parser, formatter)
 
     # Check that the test records were added to the database
     test_records = db_session.query(TestRecord).all()

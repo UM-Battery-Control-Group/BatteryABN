@@ -17,20 +17,4 @@ class Cell(Base):
 
     test_records = relationship("TestRecord", back_populates="cell")
 
-def create_cell(cell_name):
-    """
-    Factory function to create a new Cell instance.
-
-    Parameters
-    ----------
-    cell_name : str
-        The unique name of the cell.
-
-    Returns
-    -------
-    Cell
-        A new Cell instance with the specified cell name.
-    """
-    return Cell(cell_name=cell_name)
-
     

@@ -1,4 +1,5 @@
 import pickle
+import pandas as pd
 from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship, Session
 
@@ -7,7 +8,7 @@ from batteryabn.utils.parser import Parser
 from batteryabn.utils.formatter import Formatter
 from batteryabn import logger
 from .base import Base
-from .cell import Cell, create_cell
+from .cell import Cell
 
 class TestRecord(Base):
 
@@ -30,7 +31,7 @@ class TestRecord(Base):
     __tablename__ = 'testrecords'
 
     id = Column(Integer, primary_key=True)
-    test_name = Column(String)
+    test_name = Column(String, unique=True)
     test_type = Column(String)
     cell_name = Column(String, ForeignKey('cells.cell_name'))
     # Store test data as pickled object
@@ -58,54 +59,26 @@ class TestRecord(Base):
         self.cell_name = formatter.cell_name
         self.test_data = pickle.dumps(formatter.test_data)
         self.test_metadata = pickle.dumps(formatter.metadata)
+        logger.debug(f'Loaded test data from file: {path}')
 
-    def save_to_db(self, session: Session):
+    def get_test_data(self) -> pd.DataFrame:
         """
-        Save test record to database.
+        Get test data as dataframe.
 
-        Parameters
-        ----------
-        session : Session
-            SQLAlchemy session
+        Returns
+        -------
+        pd.DataFrame
+            Test data
         """
-        cell = session.query(Cell).filter_by(cell_name=self.cell_name).first()
-        if not cell:
-            # If no existing Cell, create a new one.
-            logger.info(f'Creating new cell: {self.cell_name}')
-            cell = create_cell(self.cell_name)
-            session.add(cell)
-        else:
-            logger.info(f'Found existing cell: {self.cell_name}')
-        
-        # Associate this TestRecord with the found or new Cell
-        self.cell = cell
+        return pickle.loads(self.test_data)
+    
+    def get_test_metadata(self) -> dict:
+        """
+        Get test metadata as dictionary.
 
-        # Add TestRecord to the session and commit
-        session.add(self)
-        session.commit()
-        logger.info(f'Saved test record: {self.test_name} to database')
-
-def create_test_record(path: str, parser: Parser, formatter: Formatter, session: Session):
-    """
-    Factory function to create a new TestRecord instance, load test data from file, and save to database.
-
-    Parameters
-    ----------
-    path : str
-        Path to battery test data file
-    parser : Parser
-        Parser object to parse test data
-    formatter : Formatter
-        Formatter object to format test data
-    session : Session
-        SQLAlchemy session
-
-    Returns
-    -------
-    TestRecord
-        A new TestRecord instance with the specified test data.
-    """
-    test_record = TestRecord()
-    test_record.load_from_file(path, parser, formatter)
-    test_record.save_to_db(session)
-    return test_record
+        Returns
+        -------
+        dict
+            Test metadata
+        """
+        return pickle.loads(self.test_metadata)

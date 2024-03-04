@@ -6,7 +6,7 @@ import pandas as pd
 
 from batteryabn.utils import Utils
 
-ENV_PATH = Path(__file__).parent.parent / 'data' / '.env.example'
+ENV_PATH = Path(__file__).parent.parent.parent / 'data' / '.env.example'
 
 @pytest.mark.utils
 def test_load_env():
