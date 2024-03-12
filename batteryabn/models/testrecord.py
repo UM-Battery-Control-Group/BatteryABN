@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, Session
 
 from batteryabn.utils.parser import Parser
 from batteryabn.utils.formatter import Formatter
-from batteryabn import logger
+from batteryabn import logger, Constants
 from .base import Base
 from .cell import Cell
 
@@ -82,3 +82,18 @@ class TestRecord(Base):
             Test metadata
         """
         return pickle.loads(self.test_metadata)
+    
+    def get_cycle_type(self) -> str:
+        """
+        Get the cycle type of the test. i.e. 'CYC', 'RPT', 'Test11', 'EIS', 'CAL', '_F' 
+
+        Returns
+        -------
+        str
+            Cycle type
+        """
+        for type in Constants.CYCLE_TYPES:
+            if type.lower() in self.test_name:
+                return type
+        # Default  
+        return Constants.CYCLE_TYPES[0]

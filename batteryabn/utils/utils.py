@@ -4,6 +4,7 @@ import dotenv
 import json
 import yaml
 import pandas as pd
+import numpy as np
 from batteryabn import logger
 
 
@@ -174,6 +175,53 @@ class Utils:
 
         return df
     
+    def add_column(df: pd.DataFrame, column_name: str, value: any = np.nan) -> pd.DataFrame:
+        """
+        Add a column to a DataFrame
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to add column
+        column_name : str
+            Name of the column to add
+        value : any, optional
+            Value to add to the column
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with added column
+        """
+        logger.info(f'Add column {column_name} to DataFrame')
+        df[column_name] = value * len(df)
+        return df
+
+    def set_value(df: pd.DataFrame, column_name: str, indexs: list[int], value: any) -> pd.DataFrame:
+        """
+        Set a value in a DataFrame
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to set value
+        column_name : str
+            Name of the column to set value
+        index : list of int
+            Indexs to set value
+        value : any
+            Value to set
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with set value
+        """
+        logger.info(f'Set value in DataFrame')
+        for index in indexs:
+            df.at[index, column_name] = value
+        return df
+
     def format_dict(data: dict) -> dict:
         """
         Format dictionary keys to lower case and strip
