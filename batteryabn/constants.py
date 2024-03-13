@@ -187,6 +187,7 @@ class Constants:
     #TODO: Check the column for the VDF data
     EXPANSION = 'expansion'
     EXPANSION_UM = 'expansion (um)'
+    EXPANSION_REF = 'expansion ref'
 
     TIME_VDF = 'time vdf (s)'
     MIN_CYCLE_EXPANSION = 'min cycle expansion'
@@ -199,6 +200,8 @@ class Constants:
     DRIVE_CURRENT = 'drive current'
     EXPANSION_STDDEV = 'expansion stddev (cnt)'
     REF_STDDEV = 'ref stddev (cnt)'
+
+    VDF_COLUMNS = [TIME, EXPANSION, EXPANSION_REF, TEMPERATURE, CYCLE_IDC, DRIVE_CURRENT,EXPANSION_STDDEV, REF_STDDEV]
 
     CCM_COLUMNS_ADDITIONAL_VDF = [TIME_VDF, MIN_CYCLE_EXPANSION, MAX_CYCLE_EXPANSION, REV_CYCLE_EXPANSION, 
                                   MIN_CYCLE_EXPANSION_UM, MAX_CYCLE_EXPANSION_UM, REV_CYCLE_EXPANSION_UM, 
