@@ -3,7 +3,7 @@ import numpy as np
 import rfcnt
 
 from scipy import integrate, interpolate
-from scipy.signal import find_peaks, medfilt, savgol_filter
+from scipy.signal import find_peaks, savgol_filter
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 
 from batteryabn import logger, Utils 
@@ -20,7 +20,7 @@ class Processor:
         self.cell_data = pd.DataFrame(dtype=object)
         self.cell_cycle_metrics = pd.DataFrame(dtype=object)
         self.cell_data_vdf = pd.DataFrame(dtype=object)
-        self.cell_rpt_data = pd.DataFrame(dtype=object)
+        self.cell_data_rpt = pd.DataFrame(dtype=object)
         self.update = False
 
     def set_processed_data(self, data: pd.DataFrame = None, 
@@ -745,7 +745,7 @@ class Processor:
         # Sort the DataFrame based on the first timestamp in 'Data' column
         cell_rpt_data = cell_rpt_data.sort_values(by=Const.DATA, key=lambda x: x[Const.TIME].iloc[0] if not x.empty else pd.NaT)
         
-        self.cell_rpt_data = cell_rpt_data
+        self.cell_data_rpt = cell_rpt_data
 
 
     def get_project_parameters(self, project_name: str):
