@@ -21,6 +21,7 @@ class Formatter:
         self.test_data = pd.DataFrame(dtype=object)
         self.metadata = {}
         self.cell_name = None # Cell name for the test data
+        self.last_update_time = None # Last update timestamp for the test data
 
     def format_data(self, data: pd.DataFrame, metadata: pd.DataFrame, test_type: str) -> pd.DataFrame:
         """
@@ -109,6 +110,12 @@ class Formatter:
 
 
         #TODO: Check the timestamp column
+        if not df.empty and Const.TIME in df.columns:
+            last_timestamp = df[Const.TIME].iloc[-1]
+            try:
+                self.last_update_time = int(last_timestamp)
+            except ValueError:
+                logger.error(f"Invalid timestamp: {last_timestamp}")
 
         self.test_data = df
 

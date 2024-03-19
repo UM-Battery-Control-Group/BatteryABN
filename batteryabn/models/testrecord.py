@@ -37,6 +37,7 @@ class TestRecord(Base):
     # Store test data as pickled object
     test_data = Column(LargeBinary) 
     test_metadata = Column(LargeBinary)
+    last_update_time = Column(Integer) # Unix timestamp
     cell = relationship("Cell", back_populates="test_records")
 
     def load_from_file(self, path: str, parser: Parser, formatter: Formatter):
@@ -59,6 +60,7 @@ class TestRecord(Base):
         self.cell_name = formatter.cell_name
         self.test_data = pickle.dumps(formatter.test_data)
         self.test_metadata = pickle.dumps(formatter.metadata)
+        self.last_update_time = formatter.last_update_time
         logger.debug(f'Loaded test data from file: {path}')
 
     def get_test_data(self) -> pd.DataFrame:
@@ -115,3 +117,25 @@ class TestRecord(Base):
         # It should associate the test with the cell and test time to get the calibration parameters
         # Temporarily return some default values
         return 1.6473, -27.134, 138.74
+    
+    def is_rpt(self) -> bool:
+        """
+        Check if the test is a RPT test.
+
+        Returns
+        -------
+        bool
+            True if the test is a RPT test, False otherwise
+        """
+        return 'rpt' in self.test_name.lower()
+    
+    def is_format(self) -> bool:
+        """
+        Check if the test is a formation test.
+
+        Returns
+        -------
+        bool
+            True if the test is a formation test, False otherwise
+        """
+        return '_f_' in self.test_name.lower()

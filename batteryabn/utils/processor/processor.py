@@ -387,8 +387,7 @@ class Processor:
             Utils.add_column(df, indicator, False)
         Utils.set_value(df, Const.CHARGE_CYCLE_IDC, charge_start_idxs, True)
         Utils.set_value(df, Const.DISCHARGE_CYCLE_IDC, discharge_start_idxs, True)
-        #TODO: test_data['cycle_indicator'] = test_data['charge_cycle_indicator']
-        #TODO: is_rpt() and is_format() are not implemented
+        df[Const.CYCLE_IDC] = df[Const.CHARGE_CYCLE_IDC]
         is_cap_check = tr.is_rpt() or tr.is_format()
         if is_cap_check:
             Utils.set_value(df, Const.CAPACITY_CHECK_IDC, charge_start_idxs, True)
@@ -417,13 +416,13 @@ class Processor:
             if is_cap_check:
                 # hppc: ID by # of types of current sign changes (threshold is arbitrary)
                 if len(np.where(np.diff(np.sign(i_subcycle)))[0]) > 10:
-                    df.loc[data_idx, Const.PROTOCOL] = 'HPPC'
+                    df.loc[data_idx, Const.PROTOCOL] = Const.HPPC
                 # C/20 charge: longer than 8 hrs and mean(I)>0. Will ID C/10 during formation as C/20...
                 elif (t_end - t_start) / 3600.0 > 8 and np.mean(i_subcycle) > 0 and np.mean(i_subcycle) < Const.QMAX / 18:
-                    df.loc[data_idx, Const.PROTOCOL] = 'C/20 charge'
+                    df.loc[data_idx, Const.PROTOCOL] = Const.C20_CHARGE
                 # C/20 discharge: longer than 8 hrs and mean(I)<0. Will ID C/10 during formation as C/20...
                 elif (t_end - t_start) / 3600.0 > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - Const.QMAX / 18:
-                    df.loc[data_idx, Const.PROTOCOL] = 'C/20 discharge'
+                    df.loc[data_idx, Const.PROTOCOL] = Const.C20_DISCHARGE
             
         return df
 
@@ -725,7 +724,7 @@ class Processor:
                 # Process ESOH data for the charge and discharge cycles
                 if not pre_rpt_subcycle.empty:
                     protocols = {rpt_subcycle[Const.PROTOCOL], pre_rpt_subcycle[Const.PROTOCOL]}
-                    if protocols == {'C/20 charge', 'C/20 discharge'}:
+                    if protocols == {Const.C20_CHARGE, Const.C20_DISCHARGE}:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = pd.DataFrame()
                     
@@ -762,7 +761,7 @@ class Processor:
         i : int
             Index of the subcycle in cell_cycle_metrics
         """
-        if rpt_subcycle[Const.PROTOCOL] == 'HPPC':
+        if rpt_subcycle[Const.PROTOCOL] == Const.HPPC:
             # Extract necessary data for get_Rs_SOC function
             time_ms = rpt_subcycle[Const.DATA][0][Const.TIME] / 1000.0
             current = rpt_subcycle[Const.DATA][0][Const.CURRENT]
@@ -800,7 +799,7 @@ class Processor:
         if '_F_' in rpt_subcycle[Const.RPT]:
             return        
 
-        if pre_rpt_subcycle[Const.PROTOCOL] == 'C/20 charge':
+        if pre_rpt_subcycle[Const.PROTOCOL] == Const.C20_CHARGE:
             dh_subcycle = rpt_subcycle
             ch_subcycle = pre_rpt_subcycle
         else:

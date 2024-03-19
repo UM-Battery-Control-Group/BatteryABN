@@ -29,13 +29,20 @@ class TestRecordService:
         logger.info(f'Creating new test record from file: {path}')
         test_record = TestRecord()
         test_record.load_from_file(path, parser, formatter)
+
         # Check if the test record already exists in the database
         tr_in_db = self.find_test_record_by_name(parser.test_name)
-        # TODO: Check if the test record should be updated if it already exists
-        # Now, we just skip saving the test record if it already exists
+
+        # Compare the last update time of the tr in db with the tr being created
         if tr_in_db:
-            logger.info(f'Test record already exists: {parser.test_name}')
-            return
+            if tr_in_db.last_update_time < test_record.last_update_time:
+                logger.info(f'Updating test record: {parser.test_name}')
+                self.update_test_record(tr_in_db, test_record)
+                return  
+            else:
+                logger.info(f'Test record already exists and is up-to-date: {parser.test_name}')
+                return
+            
         cell_name = formatter.cell_name
         cell = self.cell_repository.find_by_name(cell_name)
         if not cell:
@@ -47,6 +54,24 @@ class TestRecordService:
         test_record.cell = cell
         self.test_record_repository.save(test_record)
         logger.info(f'Saved test record: {test_record.test_name} to database')
+
+
+    def update_test_record(self, tr_in_db: TestRecord, test_record: TestRecord):
+        """
+        This method updates an existing TestRecord with new data.
+
+        Parameters
+        ----------
+        tr_in_db : TestRecord
+            The existing TestRecord object
+        test_record : TestRecord
+            The new TestRecord object
+        """
+        tr_in_db.test_data = test_record.test_data
+        tr_in_db.test_metadata = test_record.test_metadata
+        tr_in_db.last_update_time = test_record.last_update_time
+        self.test_record_repository.save(tr_in_db)
+        logger.info(f'Updated test record: {tr_in_db.test_name}')
 
     def find_test_record_by_name(self, test_name: str):
         """

@@ -121,6 +121,10 @@ class Constants:
     CYCLE_TYPE = 'cycle type'
     TEST_NAME = 'test name'
     PROTOCOL = 'protocol'  
+    # Protocols: HPPC, C/20 Charge, C/20 Discharge
+    HPPC = 'HPPC'
+    C20_CHARGE = 'C/20 Charge'
+    C20_DISCHARGE = 'C/20 Discharge'
 
     MIN_CYCLE_VOLTAGE = 'min cycle voltage (v)' 
     MAX_CYCLE_VOLTAGE = 'max cycle voltage (v)'
