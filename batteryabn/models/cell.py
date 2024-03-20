@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, LargeBinary
 from sqlalchemy.orm import relationship
 import pickle
 
+from batteryabn.utils import Utils
 from .base import Base
 
 class Cell(Base):
@@ -20,6 +21,11 @@ class Cell(Base):
     cell_cycle_metrics = Column(LargeBinary, nullable=True)
     cell_data_vdf = Column(LargeBinary, nullable=True)
     cell_data_rpt = Column(LargeBinary, nullable=True)
+    # Images for the processed data
+    image_cell = Column(LargeBinary, nullable=True)
+    image_ccm = Column(LargeBinary, nullable=True)
+    image_ccm_aht = Column(LargeBinary, nullable=True)
+
 
     def load_cell_data(self):
         """
@@ -44,3 +50,21 @@ class Cell(Base):
         Load cell RPT data from the database.
         """
         return pickle.loads(self.cell_data_rpt)    
+    
+    def load_image_cell(self):
+        """
+        Load the cell image from the database.
+        """
+        return Utils.binary_to_image(self.image_cell)
+
+    def load_image_ccm(self):
+        """
+        Load the cell cycle metrics image from the database.
+        """
+        return Utils.binary_to_image(self.image_ccm)
+    
+    def load_image_ccm_aht(self):
+        """
+        Load the cell cycle metrics AHT image from the database.
+        """
+        return Utils.binary_to_image(self.image_ccm_aht)

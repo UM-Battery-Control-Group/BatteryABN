@@ -1,14 +1,13 @@
 import pandas as pd 
 import numpy as np
 import rfcnt
-
 from scipy import integrate, interpolate
 from scipy.signal import find_peaks, savgol_filter
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 
 from batteryabn import logger, Utils 
 from batteryabn import Constants as Const
-from batteryabn.models import TestRecord
+from batteryabn.models import TestRecord, Project
 
 
 class Processor:
@@ -43,7 +42,7 @@ class Processor:
         self.cell_cycle_metrics = cycle_metrics
         self.cell_data_vdf = data_vdf
 
-    def process(self, cycler_trs: list[TestRecord], vdf_trs: list[TestRecord] = None, project: str = None):
+    def process(self, cycler_trs: list[TestRecord], vdf_trs: list[TestRecord] = None, project: Project = None) -> None:
         """
         Process battery test data.
 
@@ -54,12 +53,15 @@ class Processor:
 
         vdf_trs : list[TestRecord], optional
             List of TestRecord objects for voltage data
+
+        project : Project, optional
+            Project object
         """
 
         # Process cycler data
         cell_data, cell_cycle_metrics = self.process_cycler_data(cycler_trs, project)
 
-        cell_data_vdf, cell_cycle_metrics = self.process_cycler_expansion(vdf_trs, cell_cycle_metrics, project)    
+        cell_data_vdf, cell_cycle_metrics = self.process_cycler_expansion(vdf_trs, cell_cycle_metrics)    
 
         # Rearrange columns of cell_cycle_metrics for easy reading with data on left and others on right
         cols = cell_cycle_metrics.columns.to_list()
@@ -68,11 +70,11 @@ class Processor:
 
         self.set_processed_data(cell_data, cell_cycle_metrics, cell_data_vdf)
 
-        self.summarize_rpt_data()
+        self.summarize_rpt_data(project)
 
 #-----------------Cycler Expansion Processing-----------------#
 
-    def process_cycler_expansion(self, trs: list[TestRecord], cell_cycle_metrics: pd.DataFrame, project: str):
+    def process_cycler_expansion(self, trs: list[TestRecord], cell_cycle_metrics: pd.DataFrame):
         """
         Process cycler expansion data.
 
@@ -82,8 +84,6 @@ class Processor:
             List of TestRecord objects
         cell_cycle_metrics : pd.DataFrame
             Cycler cycle metrics
-        project : str
-            Project name
 
         Returns
         -------
@@ -92,7 +92,7 @@ class Processor:
         pd.DataFrame
             Processed cycler cycle metrics
         """
-        cell_data_vdf = self.combine_cycler_expansion_data(trs, project)
+        cell_data_vdf = self.combine_cycler_expansion_data(trs)
 
         # Find matching cycle timestamps from cycler data
         t_vdf, exp_vdf, exp_vdf_um = (cell_data_vdf[key] for key in [Const.TIME, Const.EXPANSION, Const.EXPANSION_UM])
@@ -139,7 +139,7 @@ class Processor:
 
         return cell_data_vdf, cell_cycle_metrics        
 
-    def combine_cycler_expansion_data(self, trs: list[TestRecord], project: str):
+    def combine_cycler_expansion_data(self, trs: list[TestRecord]):
         """
         Combine cycler expansion data from multiple files into a single dataframe.
         It will calculate the min, max, and reversible expansion for each cycle. 
@@ -148,8 +148,6 @@ class Processor:
         ----------
         trs : list[TestRecord]
             List of TestRecord objects
-        project : str
-            Project name
 
         Returns
         -------
@@ -236,7 +234,7 @@ class Processor:
 
 #-----------------Cycler Data Processing-----------------#
 
-    def process_cycler_data(self, trs: list[TestRecord], project: str):
+    def process_cycler_data(self, trs: list[TestRecord], project: Project):
         """
         Process cycler data.
 
@@ -244,8 +242,8 @@ class Processor:
         ----------
         trs : list[TestRecord]
             List of TestRecord objects
-        project : str
-            Project name
+        project : Project
+            Project object
 
         Returns
         -------
@@ -256,10 +254,7 @@ class Processor:
         """
         cell_data, cell_cycle_metrics = self.combine_cycler_data(trs)
 
-        #TODO: Put project settings in json file and change this load method
-        if project is None or project not in Const.PROJECTS_SETTING.keys():
-            project = 'DEFAULT'
-        qmax = Const.PROJECTS_SETTING[project]['Qmax']
+        qmax = project.get_qmax() if project else Const.QMAX
 
         charge_t_idxs = list(cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index)
         discharge_t_idxs = list(cell_data[cell_data[Const.DISCHARGE_CYCLE_IDC]].index)
@@ -684,9 +679,14 @@ class Processor:
 
 #----------------- RPT Data Processing -----------------#
     
-    def summarize_rpt_data(self, project_name: str = 'DEFAULT'):
+    def summarize_rpt_data(self, project: Project):
         """
         Summarize the RPT data for each RPT test record.
+
+        Parameters
+        ----------
+        project : Project
+            Project object
         """
         # Get the RPT filenames, and create a dictionary to store the indices of each RPT file
         rpt_filename_to_idxs = {
@@ -701,7 +701,8 @@ class Processor:
                 rpt_filename_to_idxs[test_name].append(idx)
 
         cycle_summary_cols = [c for c in self.cell_cycle_metrics.columns if '[' in c] + [Const.TEST_NAME, Const.PROTOCOL]
-        i_c20 = self.get_project_parameters(project_name)
+
+        i_c20 = project.get_i_c20() if project else Const.I_C20
 
         cell_rpt_data_list = []  # Use a list to collect dataframes to concatenate later
 
@@ -746,9 +747,6 @@ class Processor:
         
         self.cell_data_rpt = cell_rpt_data
 
-
-    def get_project_parameters(self, project_name: str):
-        pass
 
     def update_cycle_metrics_hppc(self, rpt_subcycle: dict, i: int):
         """

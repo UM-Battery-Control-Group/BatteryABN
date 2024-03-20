@@ -44,8 +44,8 @@ class Formatter:
             Formatted battery test data
         """
         self.clear()
-        self.format_test_data(data, test_type)
         self.format_metadata(metadata)
+        self.format_test_data(data, test_type)
 
         return self.test_data
 
@@ -90,8 +90,9 @@ class Formatter:
         elif test_type.lower() == 'neware':
             if df[Const.TEMPERATURE] is not None:
                 df[Const.TEMPERATURE] = np.where((df[Const.TEMPERATURE] >= 200) & (df[Const.TEMPERATURE] <250), np.nan, df[Const.TEMPERATURE]) 
-            # TODO: Pass in cycle type and use it 
-            if test_type == 'Formation':
+            
+            # For the formation test, calculate AHT from integrating current 
+            if self.metadata.get('Test Type').lower() == 'f':
                 # From integrating current.... some formation files had wrong units
                 time_reset = df[Const.TIME].reset_index(drop=True)
                 aht_calculated = integrate.cumtrapz(
@@ -101,13 +102,11 @@ class Formatter:
                 aht_calculated = np.append(aht_calculated, aht_calculated[-1])
                 df[Const.AHT] = aht_calculated
 
-
         # Check the data lengths for cycle data
         if test_type.lower() != 'neware_vdf':
             lengths = [len(df[column].reset_index(drop=True)) for column in [Const.TIME, Const.CURRENT, Const.VOLTAGE, Const.STEP_IDX]]
             if len(set(lengths)) > 1:
                 raise ValueError(f"Inconsistent data lengths in the dataframe")
-
 
         #TODO: Check the timestamp column
         if not df.empty and Const.TIME in df.columns:

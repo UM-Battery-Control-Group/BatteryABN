@@ -2,7 +2,7 @@ import pickle
 from batteryabn import logger
 from batteryabn.models import Cell, Project
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
-from batteryabn.utils import Processor
+from batteryabn.utils import Processor, Viewer, Utils
 
 
 class CellService:
@@ -46,7 +46,7 @@ class CellService:
 
         return cell
     
-    def process_cell(self, cell_name: str, processor: Processor):
+    def process_cell(self, cell_name: str, processor: Processor, viewer: Viewer):
         """
         Process cell data and save it to the database.
 
@@ -64,13 +64,20 @@ class CellService:
             return
         
         cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
+        # Process cell data
         processor.process(cycler_trs, vdf_trs, cell.project)
-        
+        # Genrate images for processed data
+        img_cell, img_ccm, img_ccm_aht = viewer.plot(processor, cell.cell_name)
+
         # Update cell data
         cell.cell_data = pickle.dumps(processor.cell_data)
         cell.cell_cycle_metrics = pickle.dumps(processor.cell_cycle_metrics)
         cell.cell_data_vdf = pickle.dumps(processor.cell_data_vdf)
         cell.cell_data_rpt = pickle.dumps(processor.cell_data_rpt)
+
+        cell.image_cell = Utils.image_to_binary(img_cell)
+        cell.image_ccm = Utils.image_to_binary(img_ccm)
+        cell.image_ccm_aht = Utils.image_to_binary(img_ccm_aht)
 
         # Save cell data
         try:

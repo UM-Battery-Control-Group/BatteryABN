@@ -5,10 +5,15 @@ import json
 import yaml
 import pandas as pd
 import numpy as np
+import io
+from PIL import Image
+import matplotlib.pyplot as plt
 from batteryabn import logger
 
 
 class Utils:
+
+    @staticmethod
     def load_env(env_path: str) -> None:
         """
         Load environment variables from .env file
@@ -28,6 +33,7 @@ class Utils:
             logger.info('Set logger level to INFO')
             logger.setLevel(logging.INFO)
 
+    @staticmethod
     def load_config(config_path: str) -> dict:
         """
         Load config file from path
@@ -69,6 +75,7 @@ class Utils:
         # If config file is not yaml or json, raise an error
         raise ValueError('Config file is not yaml or json')
     
+    @staticmethod
     def formate_columns(df: pd.DataFrame) -> pd.DataFrame:
         """
         Format column names of a DataFrame
@@ -88,6 +95,7 @@ class Utils:
         df.columns = df.columns.str.strip()
         return df
 
+    @staticmethod
     def rename_columns(df: pd.DataFrame, rename_dict: dict) -> pd.DataFrame:
         """
         Rename columns of a DataFrame
@@ -114,6 +122,7 @@ class Utils:
         logger.debug(f"Columns name after renaming: {df.columns.tolist()}")
         return df
 
+    @staticmethod
     def drop_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
         """
         Drop columns from a DataFrame
@@ -134,6 +143,7 @@ class Utils:
         df = df.drop(columns=columns)
         return df
 
+    @staticmethod
     def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
         """
         The function drops empty rows from DataFrame
@@ -155,6 +165,7 @@ class Utils:
 
         return df
     
+    @staticmethod
     def drop_unnamed_columns(df: pd.DataFrame) -> pd.DataFrame:
         """
         The function drops unnamed columns from DataFrame
@@ -175,6 +186,7 @@ class Utils:
 
         return df
     
+    @staticmethod
     def add_column(df: pd.DataFrame, column_name: str, value: any = np.nan) -> pd.DataFrame:
         """
         Add a column to a DataFrame
@@ -197,6 +209,7 @@ class Utils:
         df[column_name] = value * len(df)
         return df
 
+    @staticmethod
     def set_value(df: pd.DataFrame, column_name: str, indexs: list[int], value: any) -> pd.DataFrame:
         """
         Set a value in a DataFrame
@@ -222,6 +235,7 @@ class Utils:
             df.at[index, column_name] = value
         return df
 
+    @staticmethod
     def format_dict(data: dict) -> dict:
         """
         Format dictionary keys to lower case and strip
@@ -238,3 +252,46 @@ class Utils:
         """
         logger.info('Format dictionary keys to lower case and strip')
         return {k.strip(): v.strip() for k, v in data.items() if v is not None}
+    
+    @staticmethod
+    def image_to_binary(fig: plt.Figure) -> bytes:
+        """
+        Converts a matplotlib figure to binary data.
+
+        Parameters
+        ----------
+        fig : matplotlib.figure.Figure
+            The figure to convert.
+
+        Returns
+        -------
+        bytes
+            The binary representation of the figure.
+        """
+        buf = io.BytesIO()
+        fig.savefig(buf, format='PNG')
+        buf.seek(0)
+        image = Image.open(buf)
+        image_byte_array = io.BytesIO()
+        image.save(image_byte_array, format='PNG')
+        return image_byte_array.getvalue()
+    
+    @staticmethod
+    def binary_to_image(data: bytes) -> plt.Figure:
+        """
+        Converts binary data to a matplotlib figure.
+
+        Parameters
+        ----------
+        data : bytes
+            The binary data to convert.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            The figure representation of the binary data.
+        """
+        image = Image.open(io.BytesIO(data))
+        fig = plt.figure()
+        plt.imshow(image)
+        return fig

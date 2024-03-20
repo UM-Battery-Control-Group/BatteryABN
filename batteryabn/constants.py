@@ -203,6 +203,7 @@ class Constants:
     DEFAULT_TIME_ZONE_INFO = timezone(timedelta(days=-1, seconds=72000))
 
     QMAX = 3.8
+    I_C20 = 0.177
 
     #------------------------Project Setting---------------------------#
     # TODO: These values should be placed in a configuration yaml or json file

@@ -5,4 +5,7 @@ openpyxl>=3.1.2
 Pyarrow>=15.0.0
 sqlalchemy>=1.4.20
 alembic>=1.13.1
-psycopg2-binary
+psycopg2-binary>=2.9.6
+scipy>=1.11.1
+rfcnt>=0.4.1
+matplotlib>=3.7.2
