@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, LargeBinary
 from sqlalchemy.orm import relationship
 import pickle
 
-from batteryabn import logger
 from .base import Base
 
 class Cell(Base):

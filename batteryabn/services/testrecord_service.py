@@ -1,16 +1,18 @@
+import pickle
 from batteryabn import logger
-from batteryabn.models import TestRecord
+from batteryabn.models import TestRecord, Cell, Project
 from batteryabn.utils import Parser, Formatter
-from batteryabn.repositories import CellRepository, TestRecordRepository
+from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
 
 
 class TestRecordService:
     """
     The TestRecordService class provides an interface for saving TestRecord objects.
     """
-    def __init__(self, cell_repository: CellRepository, test_record_repository: TestRecordRepository):
+    def __init__(self, cell_repository: CellRepository, test_record_repository: TestRecordRepository, project_repository: ProjectRepository):
         self.cell_repository = cell_repository
         self.test_record_repository = test_record_repository
+        self.project_repository = project_repository
 
     def create_and_save_tr(self, path: str, parser: Parser, formatter: Formatter):
         """
@@ -27,51 +29,57 @@ class TestRecordService:
             Formatter object to format test data
         """
         logger.info(f'Creating new test record from file: {path}')
-        test_record = TestRecord()
-        test_record.load_from_file(path, parser, formatter)
+        parser.parse(path)
+        formatter.format_data(parser.raw_test_data, parser.raw_metadata, parser.test_type)
 
-        # Check if the test record already exists in the database
-        tr_in_db = self.find_test_record_by_name(parser.test_name)
+        test_name = parser.test_name
+        test_record = self.test_record_repository.find_by_name(test_name)
 
-        # Compare the last update time of the tr in db with the tr being created
-        if tr_in_db:
-            if tr_in_db.last_update_time < test_record.last_update_time:
-                logger.info(f'Updating test record: {parser.test_name}')
-                self.update_test_record(tr_in_db, test_record)
-                return  
-            else:
-                logger.info(f'Test record already exists and is up-to-date: {parser.test_name}')
-                return
-            
-        cell_name = formatter.cell_name
-        cell = self.cell_repository.find_by_name(cell_name)
+        # If test record exists and is up-to-date, no action needed
+        if test_record and test_record.last_update_time >= formatter.last_update_time:
+            logger.info(f'Test record already exists and is up-to-date: {test_name}')
+            return
+
+        # Create or update the test record
+        if not test_record:
+            test_record = TestRecord(test_name=test_name)
+            self.test_record_repository.add(test_record)
+
+        # Load data from parser and formatter
+        test_record.test_type = parser.test_type
+        test_record.cell_name = formatter.cell_name
+        test_record.test_data = pickle.dumps(formatter.test_data)
+        test_record.test_metadata = pickle.dumps(formatter.metadata)
+        test_record.last_update_time = formatter.last_update_time
+
+        # Check if cell exists, if not create it
+        cell = self.cell_repository.find_by_name(formatter.cell_name)
         if not cell:
-            logger.info(f'Creating new cell: {cell_name}')
-            cell = self.cell_repository.create_cell(cell_name)
-        else:
-            logger.info(f'Found existing cell: {cell_name}')
-        
+            logger.info(f'Creating new cell: {formatter.cell_name}')
+            cell = Cell(cell_name=formatter.cell_name)
+            self.cell_repository.add(cell)
         test_record.cell = cell
-        self.test_record_repository.save(test_record)
-        logger.info(f'Saved test record: {test_record.test_name} to database')
+        logger.info(f'Saving test record: {test_name}')
 
+        # Check if project exists, if not create it
+        project_name = formatter.metadata.get('Project Name')
+        if project_name:
+            project = self.project_repository.find_by_name(project_name)
+            if not project:
+                logger.info(f'Creating new project: {project_name}')
+                project = Project(project_name=project_name)
+                self.project_repository.add(project)
+            # Associate the cell with the project.
+            cell.project = project
+        
+        try:
+            self.test_record_repository.commit()
+            logger.info(f'Saved test record: {test_name} to database')
+        except Exception as e:
+            self.test_record_repository.rollback()
+            logger.error(f'Failed to save test record: {test_name}. Error: {e}')
+            raise e
 
-    def update_test_record(self, tr_in_db: TestRecord, test_record: TestRecord):
-        """
-        This method updates an existing TestRecord with new data.
-
-        Parameters
-        ----------
-        tr_in_db : TestRecord
-            The existing TestRecord object
-        test_record : TestRecord
-            The new TestRecord object
-        """
-        tr_in_db.test_data = test_record.test_data
-        tr_in_db.test_metadata = test_record.test_metadata
-        tr_in_db.last_update_time = test_record.last_update_time
-        self.test_record_repository.save(tr_in_db)
-        logger.info(f'Updated test record: {tr_in_db.test_name}')
 
     def find_test_record_by_name(self, test_name: str):
         """

@@ -1,14 +1,11 @@
 import pickle
 import pandas as pd
 from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 
-
-from batteryabn.utils.parser import Parser
-from batteryabn.utils.formatter import Formatter
-from batteryabn import logger, Constants
+from batteryabn import Constants
 from .base import Base
-from .cell import Cell
+
 
 class TestRecord(Base):
 
@@ -40,28 +37,6 @@ class TestRecord(Base):
     last_update_time = Column(Integer) # Unix timestamp
     cell = relationship("Cell", back_populates="test_records")
 
-    def load_from_file(self, path: str, parser: Parser, formatter: Formatter):
-        """
-        Load battery test data from file.
-
-        Parameters
-        ----------
-        path : str
-            Path to battery test data file
-        parser : Parser
-            Parser object to parse test data
-        formatter : Formatter
-            Formatter object to format test data
-        """
-        parser.parse(path)
-        formatter.format_data(parser.raw_test_data, parser.raw_metadata, parser.test_type)
-        self.test_name = parser.test_name
-        self.test_type = parser.test_type
-        self.cell_name = formatter.cell_name
-        self.test_data = pickle.dumps(formatter.test_data)
-        self.test_metadata = pickle.dumps(formatter.metadata)
-        self.last_update_time = formatter.last_update_time
-        logger.debug(f'Loaded test data from file: {path}')
 
     def get_test_data(self) -> pd.DataFrame:
         """
