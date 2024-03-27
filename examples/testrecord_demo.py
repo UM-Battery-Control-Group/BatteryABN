@@ -1,6 +1,5 @@
 import os
-from batteryabn import TestRecord, Cell
-from batteryabn.repositories import TestRecordRepository, CellRepository
+from batteryabn.repositories import TestRecordRepository, CellRepository, ProjectRepository
 from batteryabn.services import TestRecordService
 from batteryabn.utils import Parser, Formatter
 from batteryabn.models import Session
@@ -23,7 +22,8 @@ parser = Parser()
 formatter = Formatter()
 cell_repository = CellRepository(session)
 test_record_repository = TestRecordRepository(session)
-test_record_service = TestRecordService(cell_repository, test_record_repository)
+project_repository = ProjectRepository(session)
+test_record_service = TestRecordService(cell_repository, test_record_repository, project_repository)
 
 for path in paths:
     test_record_service.create_and_save_tr(path, parser, formatter)

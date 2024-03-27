@@ -21,16 +21,14 @@ formatter = Formatter()
 
 for path in neware_test_paths:
     parser.parse(path)
-    formatter.format_test_data(parser.raw_test_data, parser.test_type)
-    formatter.format_metadata(parser.raw_metadata)
+    formatter.format_data(parser.raw_test_data, parser.raw_metadata, parser.test_type)
 
     print(formatter.test_data.head())
     print(formatter.metadata)
 
 for path in neware_vdf_test_paths:
     parser.parse(path)
-    formatter.format_test_data(parser.raw_test_data, parser.test_type)
-    formatter.format_metadata(parser.raw_metadata)
+    formatter.format_data(parser.raw_test_data, parser.raw_metadata, parser.test_type)
 
     print(formatter.metadata)
     print(formatter.cell_name)

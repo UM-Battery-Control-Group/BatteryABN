@@ -10,48 +10,17 @@ class Constants:
     CURRENT = 'current(a)'
     VOLTAGE = 'voltage(v)'
     AHT = 'capacity(ah)'
-    TEMPERATURE = 'cell temperature (c)'
+    TEMPERATURE = 'temperature (c)'
     CHARGE_CAPACITY = 'chg. cap.(ah)'
     DISCHARGE_CAPACITY = 'dchg. cap.(ah)'
+    CHARGE_ENERGY = 'chg. energy(wh)'
+    DISCHARGE_ENERGY = 'dchg. energy(wh)'
+    TIMESTAMP = 'timestamp'
+    TOTAL_TIME = 'total time'
+    CONTACT_RESISTANCE = 'contact resistance(mω)'
     
     FILE_TYPE_2_TEST_TYPE = {'res': 'Arbin', 'mpt': 'BioLogic', 'xlsx': 'Neware', 'csv': 'Neware_Vdf'}
 
-    ARBIN_RENAME_DICT = {'step_time': 'time',
-                        'step_index': STEP_IDX,
-                        'cycle_index': CYCLE_IDX,
-                        'test_time': 'total time',
-                        'date_time': 'timestamp',
-                        'current': CURRENT,
-                        'voltage': VOLTAGE,
-                        'charge_capacity': CHARGE_CAPACITY,
-                        'discharge_capacity': DISCHARGE_CAPACITY,
-                        'charge_energy': 'chg. energy(wh)',
-                        'discharge_energy': 'dchg. energy(wh)',
-                        'internal_resistance': 'contact resistance(mω)'}
-    
-    BIOLOGIC_RENAME_DICT = {'cycle number': CYCLE_IDX,
-                        'mode': 'step type',
-                        'time/s': 'total time',
-                        'i': CURRENT,
-                        'ecell/v': VOLTAGE,
-                        # TODO: Check the correct units for the ma.h columns
-                        'capacity/ma.h': AHT,
-                        'q charge/ma.h': CHARGE_CAPACITY,
-                        'q discharge/ma.h': DISCHARGE_CAPACITY,
-                        'energy charge/w.h': 'chg. energy(wh)',
-                        'energy discharge/w.h': 'dchg. energy(wh)',
-                        'half cycle': 'dqm/dv(mah/v.g)',
-                        'temperature/°c': TEMPERATURE,
-                        'efficiency/%': 'ambient temperature (c)'}
-    
-    NEWARE_RENAME_DICT = {'t1(℃)': TEMPERATURE}
-
-    NEWARE_VDF_RENAME_DICT = {'test time (second)': 'time',
-                        'timestamp (epoch)': 'timestamp',
-                        'current (amp)': CURRENT,
-                        'potential (volt)': VOLTAGE,
-                        'ambient temperature (celsius)': 'ambient temperature (c)'}
-    
     ARBIN_NAME_KEYS = [
         "Project Name",
         "Cell ID",
@@ -134,7 +103,7 @@ class Constants:
     AVG_CYCLE_DISCHARGE_CURRENT = 'avg cycle discharge current (a)'
 
     CCM_COLUMNS = [TIME, AHT, CYCLE_TYPE, PROTOCOL, DISCHARGE_CYCLE_IDC, CHARGE_CYCLE_IDC, 
-                CAPACITY_CHECK_IDC, CYCLE_IDX, TEST_NAME]
+                CAPACITY_CHECK_IDC, CYCLE_IDC, TEST_NAME]
     CCM_COLUMNS_ADDITIONAL = [CHARGE_CAPACITY, DISCHARGE_CAPACITY, MIN_CYCLE_VOLTAGE, MAX_CYCLE_VOLTAGE, 
                             MIN_CYCLE_TEMP, MAX_CYCLE_TEMP, AVG_CYCLE_CHARGE_CURRENT, AVG_CYCLE_DISCHARGE_CURRENT]
 
@@ -197,6 +166,49 @@ class Constants:
     CCM_COLUMNS_ADDITIONAL_ESOH = [ESOH_C, ESOH_CN, ESOH_X0, ESOH_X100, ESOH_CP, ESOH_Y0, 
                                    ESOH_Y100, RMSE_V, RMSE_DVDQ, P1_ERR, P2_ERR, P12_ERR]
 
+    #-------------------RENAME_DICT-------------------#
+
+    ARBIN_RENAME_DICT = {'step_time': TIME,
+                        'step_index': STEP_IDX,
+                        'cycle_index': CYCLE_IDX,
+                        'test_time': TOTAL_TIME,
+                        'date_time': TIMESTAMP,
+                        'current': CURRENT,
+                        'voltage': VOLTAGE,
+                        'charge_capacity': CHARGE_CAPACITY,
+                        'discharge_capacity': DISCHARGE_CAPACITY,
+                        'charge_energy': CHARGE_ENERGY,
+                        'discharge_energy': DISCHARGE_ENERGY,
+                        'internal_resistance': CONTACT_RESISTANCE}
+    
+    BIOLOGIC_RENAME_DICT = {'cycle number': CYCLE_IDX,
+                        'mode': 'step type',
+                        'time/s': TOTAL_TIME,
+                        'i': CURRENT,
+                        'ecell/v': VOLTAGE,
+                        # TODO: Check the correct units for the ma.h columns
+                        'capacity/ma.h': AHT,
+                        'q charge/ma.h': CHARGE_CAPACITY,
+                        'q discharge/ma.h': DISCHARGE_CAPACITY,
+                        'energy charge/w.h': CHARGE_ENERGY,
+                        'energy discharge/w.h': DISCHARGE_ENERGY,
+                        'half cycle': 'dqm/dv(mah/v.g)',
+                        'temperature/°c': TEMPERATURE,
+                        'efficiency/%': 'efficiency/%'}
+    
+    NEWARE_RENAME_DICT = {'t1(℃)': TEMPERATURE}
+
+    NEWARE_VDF_RENAME_DICT = {'test time (second)': TIME,
+                        'timestamp (epoch)': TIMESTAMP,
+                        'current (amp)': CURRENT,
+                        'potential (volt)': VOLTAGE,
+                        'ldc sensor': EXPANSION,
+                        'ldc ref': EXPANSION_REF,
+                        'ambient temperature (celsius)': TEMPERATURE,
+                        'ldc std': EXPANSION_STDDEV,
+                        'ref std': REF_STDDEV,
+                        'drivecurrent': DRIVE_CURRENT,}
+    
 
 
 #------------------------------------Numeric:------------------------------------#

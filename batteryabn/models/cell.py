@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, LargeBinary
+from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
 import pickle
 
@@ -16,11 +16,11 @@ class Cell(Base):
     # Unique cell name. i.e. 'GMJuly2022_CELL002'
     cell_name = Column(String, unique=True) 
     test_records = relationship("TestRecord", back_populates="cell")
+    project_name = Column(String, ForeignKey('projects.project_name'))
     project = relationship("Project", back_populates="cells")
     cell_data = Column(LargeBinary, nullable=True)
     cell_cycle_metrics = Column(LargeBinary, nullable=True)
     cell_data_vdf = Column(LargeBinary, nullable=True)
-    cell_data_rpt = Column(LargeBinary, nullable=True)
     # Images for the processed data
     image_cell = Column(LargeBinary, nullable=True)
     image_ccm = Column(LargeBinary, nullable=True)

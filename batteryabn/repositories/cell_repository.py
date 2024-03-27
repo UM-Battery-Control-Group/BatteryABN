@@ -21,7 +21,7 @@ class CellRepository(BaseRepository):
         Cell
             The Cell object with the specified name
         """
-        return self.session.query(Cell).filter_by(cell_name=cell_name).first()
+        return self.session.query(Cell).filter_by(cell_name=cell_name.upper()).first()
 
     def find_by_project(self, project_name: str):
         """

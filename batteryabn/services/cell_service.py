@@ -73,7 +73,6 @@ class CellService:
         cell.cell_data = pickle.dumps(processor.cell_data)
         cell.cell_cycle_metrics = pickle.dumps(processor.cell_cycle_metrics)
         cell.cell_data_vdf = pickle.dumps(processor.cell_data_vdf)
-        cell.cell_data_rpt = pickle.dumps(processor.cell_data_rpt)
 
         cell.image_cell = Utils.image_to_binary(img_cell)
         cell.image_ccm = Utils.image_to_binary(img_ccm)

@@ -108,13 +108,12 @@ class Formatter:
             if len(set(lengths)) > 1:
                 raise ValueError(f"Inconsistent data lengths in the dataframe")
 
-        #TODO: Check the timestamp column
-        if not df.empty and Const.TIME in df.columns:
-            last_timestamp = df[Const.TIME].iloc[-1]
-            try:
-                self.last_update_time = int(last_timestamp)
-            except ValueError:
-                logger.error(f"Invalid timestamp: {last_timestamp}")
+        if not df.empty and Const.TIMESTAMP in df.columns:
+            last_timestamp_value = df[Const.TIMESTAMP].iloc[-1]
+            if isinstance(last_timestamp_value, pd.Timestamp):
+                self.last_timestamp = Utils.timestamp_to_int(last_timestamp_value)
+            else:
+                self.last_timestamp = int(last_timestamp_value)
 
         self.test_data = df
 

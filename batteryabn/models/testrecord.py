@@ -69,13 +69,14 @@ class TestRecord(Base):
         str
             Cycle type
         """
+        # TODO: CYCLE_TYPES should be in the configuration file? 
         for type in Constants.CYCLE_TYPES:
             if type.lower() in self.test_name:
                 return type
         # Default  
         return Constants.CYCLE_TYPES[0]
     
-    def get_calibration_parameters():
+    def get_calibration_parameters(self):
         """
         Get calibration parameters for the test.
 

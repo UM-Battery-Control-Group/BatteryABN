@@ -36,6 +36,7 @@ class TestRecordService:
         test_record = self.test_record_repository.find_by_name(test_name)
 
         # If test record exists and is up-to-date, no action needed
+        # TODO: Size check
         if test_record and test_record.last_update_time >= formatter.last_update_time:
             logger.info(f'Test record already exists and is up-to-date: {test_name}')
             return

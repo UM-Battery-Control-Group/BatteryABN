@@ -7,8 +7,9 @@ import pandas as pd
 import numpy as np
 import io
 from PIL import Image
+from datetime import datetime
 import matplotlib.pyplot as plt
-from batteryabn import logger
+from batteryabn import logger, Constants as Const
 
 
 class Utils:
@@ -206,7 +207,7 @@ class Utils:
             DataFrame with added column
         """
         logger.info(f'Add column {column_name} to DataFrame')
-        df[column_name] = value * len(df)
+        df[column_name] = pd.Series([value] * len(df))
         return df
 
     @staticmethod
@@ -251,7 +252,7 @@ class Utils:
             Formatted dictionary
         """
         logger.info('Format dictionary keys to lower case and strip')
-        return {k.strip(): v.strip() for k, v in data.items() if v is not None}
+        return {k.strip(): v.strip().upper() for k, v in data.items() if v is not None}
     
     @staticmethod
     def image_to_binary(fig: plt.Figure) -> bytes:
@@ -295,3 +296,54 @@ class Utils:
         fig = plt.figure()
         plt.imshow(image)
         return fig
+    
+    @staticmethod
+    def timestamp_to_int(timestamp: pd.Timestamp, tz_info = Const.DEFAULT_TIME_ZONE_INFO) -> int:
+        """
+        Function to convert a timestamp to a Unix timestamp
+
+        Parameters
+        ----------
+        timestamp : pd.Timestamp
+            Timestamp to convert
+        tz_info : timezone, optional
+            Timezone info, by default Const.DEFAULT_TIME_ZONE_INFO
+
+        Returns
+        -------
+        int
+            Unix timestamp
+        """
+        try:
+            dt = timestamp.to_pydatetime()
+        except ValueError:
+            logger.error(f'Invalid timestamp: {timestamp}')
+
+        return int(dt.timestamp())
+
+    @staticmethod
+    def timestamp_to_str(timestamp: float, format: str = "%Y-%m-%d %H:%M:%S.%f", tz_info = Const.DEFAULT_TIME_ZONE_INFO):
+        """
+        Function to convert a timestamp to a string date
+
+        Parameters
+        ----------
+        timestamp : float
+            Unix timestamp
+        format : str, optional
+            Date format, by default "%Y-%m-%d %H:%M:%S.%f"
+        tz_info : timezone, optional
+            Timezone info, by default Const.DEFAULT_TIME_ZONE_INFO
+
+        Returns
+        -------
+        str
+            Date string
+        """
+        try:
+            dt = datetime.fromtimestamp(timestamp, tz_info)
+        except ValueError:
+            logger.error(f'Invalid timestamp: {timestamp}')
+
+        date_str = dt.strftime(format)
+        return date_str

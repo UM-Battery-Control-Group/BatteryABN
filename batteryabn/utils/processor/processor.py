@@ -5,8 +5,8 @@ from scipy import integrate, interpolate
 from scipy.signal import find_peaks, savgol_filter
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 
-from batteryabn import logger, Utils 
-from batteryabn import Constants as Const
+from batteryabn.utils import Utils
+from batteryabn import logger, Constants as Const
 from batteryabn.models import TestRecord, Project
 
 
@@ -19,7 +19,6 @@ class Processor:
         self.cell_data = pd.DataFrame(dtype=object)
         self.cell_cycle_metrics = pd.DataFrame(dtype=object)
         self.cell_data_vdf = pd.DataFrame(dtype=object)
-        self.cell_data_rpt = pd.DataFrame(dtype=object)
         self.update = False
 
     def set_processed_data(self, data: pd.DataFrame = None, 
@@ -327,7 +326,11 @@ class Processor:
         cell_data[Const.CYCLE_IDC] = cell_data[Const.CHARGE_CYCLE_IDC] #default cycle indicator on charge
 
         # Save cycle metrics to separate dataframe and sort. Only keep columns where charge and discharge cycles start. Label the type of protocol
-        cell_cycle_metrics = cell_data[Const.CCM_COLUMNS][(cell_data[Const.CHARGE_CYCLE_IDC]) | (cell_data[Const.DISCHARGE_CYCLE_IDC])].copy()
+        cycle_idxs = cell_data[(cell_data[Const.CHARGE_CYCLE_IDC]==True) | (cell_data[Const.DISCHARGE_CYCLE_IDC]==True)].index 
+        if len(cycle_idxs) == 0:
+            logger.warning("No cycles detected")
+            return cell_data, pd.DataFrame(columns = Const.CCM_COLUMNS)
+        cell_cycle_metrics = cell_data[Const.CCM_COLUMNS][cycle_idxs].copy()
         cell_cycle_metrics.reset_index(drop=True, inplace=True)
         logger.info(f"Found {len(cell_data)} cell data, {len(cell_cycle_metrics)} cycles")
 
@@ -390,15 +393,23 @@ class Processor:
         # Add cycle type and test name to df
         Utils.add_column(df, Const.CYCLE_TYPE, ' ')
         Utils.add_column(df, Const.TEST_NAME, ' ')
-        
-        Utils.set_value(df, Const.CYCLE_TYPE, np.concatenate((discharge_start_idxs,charge_start_idxs)), protocal)
-        Utils.set_value(df, Const.TEST_NAME, np.concatenate((discharge_start_idxs,charge_start_idxs)), tr.test_name)
-
         # Identify subcycle type. For extracting HPPC and C/20 dis/charge data later. 
         Utils.add_column(df, Const.PROTOCOL, np.nan)
 
+        cycle_idxs = np.unique(np.concatenate((charge_start_idxs, discharge_start_idxs)))
+        
+        if len(cycle_idxs) == 0:
+            logger.warning(f"No cycles detected for {tr.test_name}")
+            return df
+        
+        Utils.set_value(df, Const.CYCLE_TYPE, cycle_idxs, protocal)
+        Utils.set_value(df, Const.TEST_NAME, cycle_idxs, tr.test_name)
+        Utils.set_value(df, Const.CHARGE_CYCLE_IDC, charge_start_idxs, True)
+        Utils.set_value(df, Const.DISCHARGE_CYCLE_IDC, discharge_start_idxs, True)
+        df[Const.CYCLE_IDC] = df[Const.CHARGE_CYCLE_IDC]
+
         # Get the cycle metrics
-        cycle_metrics = df[(df[Const.CHARGE_CYCLE_IDC]) | (df[Const.DISCHARGE_CYCLE_IDC])]
+        cycle_metrics = df.iloc(cycle_idxs)
 
         for i in range(0, len(cycle_metrics)):
             t_start = cycle_metrics[Const.TIME].iloc[i]
@@ -440,15 +451,16 @@ class Processor:
         discharge_start_idx: np.ndarray
             Array of indices where discharging cycles start
         """
-
+        t_timedelta = pd.to_timedelta(t)
+        t_seconds = t_timedelta.dt.total_seconds()
         ic = (i.values > 1e-5).astype(int)
         Id = (i.values < -1e-5).astype(int)
         potential_charge_start_idxs = np.where(np.diff(ic) > 0.5)[0]
         potential_discharge_start_idxs = np.where(np.diff(Id) > 0.5)[0]
-        dt = np.diff(t)
+        dt = np.diff(t_seconds)
 
         # Cumah = Ah_Charge - Ah_Discharge
-        cumah = integrate.cumtrapz(i, t, initial=0) / 3600 / 1000  # ms to hours
+        cumah = integrate.cumtrapz(i, t_seconds, initial=0) / 3600  # s to hours
         # Calculate the average discharge current and average time until the next charge step
         cumah = cumah - cumah.min()
         # Check for large gaps in the data, and reset the cumah counter.
@@ -745,8 +757,6 @@ class Processor:
         # Sort the DataFrame based on the first timestamp in 'Data' column
         cell_rpt_data = cell_rpt_data.sort_values(by=Const.DATA, key=lambda x: x[Const.TIME].iloc[0] if not x.empty else pd.NaT)
         
-        self.cell_data_rpt = cell_rpt_data
-
 
     def update_cycle_metrics_hppc(self, rpt_subcycle: dict, i: int):
         """

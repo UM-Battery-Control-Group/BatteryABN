@@ -11,4 +11,4 @@ class TestRecordRepository(BaseRepository):
         return self.session.query(TestRecord).filter_by(test_name=test_name).first()
     
     def find_by_cell_name(self, cell_name: str):
-        return self.session.query(TestRecord).filter_by(cell_name=cell_name).all()
+        return self.session.query(TestRecord).filter_by(cell_name=cell_name.upper()).all()
