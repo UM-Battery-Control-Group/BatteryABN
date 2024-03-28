@@ -747,6 +747,8 @@ class Processor:
 
                 cell_rpt_data_list.append(pd.DataFrame([rpt_subcycle]))
 
+        return 
+    
         cell_rpt_data = pd.concat(cell_rpt_data_list, ignore_index=True)
         cell_rpt_data.reset_index(drop=True, inplace=True)
 

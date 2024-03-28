@@ -2,7 +2,7 @@ import os
 import re
 import pandas as pd
 
-from batteryabn import logger, Constants
+from batteryabn import logger, Constants as Const
 
 class Parser:
     def __init__(self):
@@ -88,7 +88,8 @@ class Parser:
         # Add the timestamp for the neware data
         start_time = pd.to_datetime(neware_raw_df['Date'][0])
         total_time = pd.to_timedelta(neware_raw_df['Total Time'])
-        neware_raw_df['Timestamp'] = start_time + total_time
+        neware_raw_df[Const.TIMESTAMP] = start_time + total_time
+        neware_raw_df.drop(columns=['t1(℃)'], inplace=True)
         
         # Store raw test data
         self.raw_test_data = neware_raw_df
@@ -127,7 +128,7 @@ class Parser:
         ValueError
             If the test name does not match the name rules of the test type
         """
-        keys = getattr(Constants, f'{test_type.upper()}_NAME_KEYS')
+        keys = getattr(Const, f'{test_type.upper()}_NAME_KEYS')
         # Split the test name by '_' and match the keys
         try:
             values = test_name.split('_')
@@ -179,8 +180,8 @@ class Parser:
         # Determine test type from file path
         file_type = file_path.split(".")[-1]
 
-        if file_type in Constants.FILE_TYPE_2_TEST_TYPE:
-            test_type = Constants.FILE_TYPE_2_TEST_TYPE[file_type]
+        if file_type in Const.FILE_TYPE_2_TEST_TYPE:
+            test_type = Const.FILE_TYPE_2_TEST_TYPE[file_type]
             logger.debug(f'Test type: {test_type}')
         else:
             raise ValueError(f'Unsupported file type: {file_type}')

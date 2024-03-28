@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from batteryabn import logger, Constants as Const
-from batteryabn.utils import Processor
+from batteryabn.utils import Processor, Utils
 
 class Viewer:
 
@@ -40,7 +40,7 @@ class Viewer:
                           cell_cycle_metrics: pd.DataFrame, cell_name: str, downsample = 100):
 
         # Cell data
-        t = cell_data[Const.TIME]
+        t = cell_data[Const.TIMESTAMP]
         i = cell_data[Const.CURRENT]
         v = cell_data[Const.VOLTAGE]
         temperature = cell_data[Const.TEMPERATURE]
@@ -48,26 +48,26 @@ class Viewer:
 
         # Choose cell_data_vdf[Const.EXPANSION_UM] > -5000 to remove outliers
         vdf_filter_idx = cell_data_vdf[Const.EXPANSION_UM] > -5000
-        t_vdf = cell_data_vdf[Const.TIME][vdf_filter_idx]
+        t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms')
         exp_vdf = cell_data_vdf[Const.EXPANSION_UM][vdf_filter_idx]
         temperature_vdf = cell_data_vdf[Const.TEMPERATURE][vdf_filter_idx]
 
         # CCM
-        t_cycle = cell_cycle_metrics[Const.TIME]
+        t_cycle = cell_cycle_metrics[Const.TIMESTAMP]
         q_c = cell_cycle_metrics[Const.CHARGE_CAPACITY]
         q_d = cell_cycle_metrics[Const.DISCHARGE_CAPACITY]
 
         # Index metrics
-        cycle_idx = cell_data[cell_data[Const.CYCLE_IDC].notna()].index
-        capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC].notna()].index
+        cycle_idx = cell_data[cell_data[Const.CYCLE_IDC]].index
+        capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC]].index
         # TODO
-        cycle_vdf_idx = cell_data_vdf[cell_data_vdf[Const.CYCLE_IDC].notna()].index
-        capacity_check_in_cycle_idx = cell_data_vdf[cell_data_vdf[Const.CAPACITY_CHECK_IDC].notna()].index
-        charge_idx = cell_data[cell_data[Const.CHARGE_CYCLE_IDC].notna()].index
-        
-        t_array = t.astype('int64').to_numpy() / 1.0e9
-        _, ips, vps, idxs = self.downsample_data(t_array, i.to_numpy(), v.to_numpy())
-        tt = t[idxs]
+        cycle_vdf_idx = cell_data_vdf[cell_data_vdf[Const.CYCLE_IDC]].index
+        capacity_check_in_cycle_idx = cell_cycle_metrics[cell_cycle_metrics[Const.CAPACITY_CHECK_IDC]].index
+        charge_idx = cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index
+
+        # t_array = Utils.time_str_to_seconds(t)
+        # _, ips, vps, idxs = self.downsample_data(t_array, i.to_numpy(), v.to_numpy())
+        # tt = t[idxs]
 
         logger.info("Plotting cell: " + cell_name)
         # Setup plot 
@@ -75,7 +75,7 @@ class Viewer:
         
         # Plot current 
         ax0 = axes.flat[0]
-        ax0.plot_date(tt, ips, '-')
+        ax0.plot_date(t, i, '-')
         ax0.plot_date(t[cycle_idx], i[cycle_idx], "x")
         ax0.plot_date(t[capacity_check_idx], i[capacity_check_idx], "*", c = "r")
         ax0.set_ylabel("Current [A]")
@@ -83,7 +83,7 @@ class Viewer:
 
         # Plot voltage 
         ax1 = axes.flat[1]
-        ax1.plot_date(tt,vps,'-')
+        ax1.plot_date(t,v,'-')
         ax1.plot_date(t[cycle_idx], v[cycle_idx], "x")
         ax1.plot_date(t[charge_idx], v[charge_idx], "o")
         ax1.plot_date(t[capacity_check_idx], v[capacity_check_idx], "*", c = "r")
@@ -138,7 +138,7 @@ class Viewer:
                           cell_cycle_metrics: pd.DataFrame, cell_name: str, downsample = 100):
 
         # Cell data
-        t = cell_data[Const.TIME]
+        t = cell_data[Const.TIMESTAMP]
         i = cell_data[Const.CURRENT]
         v = cell_data[Const.VOLTAGE]
         temperature = cell_data[Const.TEMPERATURE]
@@ -146,11 +146,11 @@ class Viewer:
 
         # Choose cell_data_vdf[Const.EXPANSION_UM] > -5000 to remove outliers
         vdf_filter_idx = cell_data_vdf[Const.EXPANSION_UM] > -5000
-        t_vdf = cell_data_vdf[Const.TIME][vdf_filter_idx]
+        t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms')
         exp_vdf = cell_data_vdf[Const.EXPANSION_UM][vdf_filter_idx]
         temperature_vdf = cell_data_vdf[Const.TEMPERATURE][vdf_filter_idx]
 
-        t_cycle = cell_cycle_metrics[Const.TIME]
+        t_cycle = cell_cycle_metrics[Const.TIMESTAMP]
         q_c = cell_cycle_metrics[Const.CHARGE_CAPACITY]
         q_d = cell_cycle_metrics[Const.DISCHARGE_CAPACITY]
         v_min = cell_cycle_metrics[Const.MIN_CYCLE_VOLTAGE]
@@ -162,12 +162,12 @@ class Viewer:
         exp_rev = cell_cycle_metrics[Const.REV_CYCLE_EXPANSION_UM]
 
         # Index metrics
-        cycle_idx = cell_data[cell_data[Const.CYCLE_IDC].notna()].index
-        capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC].notna()].index
+        cycle_idx = cell_data[cell_data[Const.CYCLE_IDC]].index
+        capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC]].index
         # TODO
-        cycle_vdf_idx = cell_data_vdf[cell_data_vdf[Const.CYCLE_IDC].notna()].index
-        capacity_check_in_cycle_idx = cell_data_vdf[cell_data_vdf[Const.CAPACITY_CHECK_IDC].notna()].index
-        charge_idx = cell_data[cell_data[Const.CHARGE_CYCLE_IDC].notna()].index
+        cycle_vdf_idx = cell_data_vdf[cell_data_vdf[Const.CYCLE_IDC]].index
+        capacity_check_in_cycle_idx = cell_cycle_metrics[cell_cycle_metrics[Const.CAPACITY_CHECK_IDC]].index
+        charge_idx = cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index
 
         logger.info("Plotting cycle metrics: " + cell_name)
         # Setup plot 
@@ -293,9 +293,9 @@ class Viewer:
         aht_cycle = cell_cycle_metrics[Const.AHT]
 
         # Index metrics
-        cycle_idx = cell_data[cell_data[Const.CYCLE_IDC].notna()].index
-        capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC].notna()].index
-        capacity_check_in_cycle_idx = cell_data_vdf[cell_data_vdf[Const.CAPACITY_CHECK_IDC].notna()].index
+        cycle_idx = cell_data[cell_data[Const.CYCLE_IDC]].index
+        capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC]].index
+        capacity_check_in_cycle_idx = cell_cycle_metrics[cell_cycle_metrics[Const.CAPACITY_CHECK_IDC]].index
 
         logger.info("Plotting cycle metrics AhT: " + cell_name)
 

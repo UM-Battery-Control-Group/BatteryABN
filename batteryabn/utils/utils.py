@@ -347,3 +347,23 @@ class Utils:
 
         date_str = dt.strftime(format)
         return date_str
+    
+    @staticmethod
+    def time_str_to_seconds(t_series: pd.Series) -> np.ndarray:
+        """
+        Convert a pandas Series of time strings in "HH:MM:SS.fff" format to an array of integers representing seconds.
+
+        Parameters:
+        - t_series (pd.Series): A pandas Series containing time strings.
+
+        Returns:
+        - np.ndarray: An array of integers representing the time in milliseconds.
+        """
+        # Convert the time strings to Timedelta
+        t_timedelta = pd.to_timedelta(t_series)
+        # Convert the Timedelta to total seconds and cast to int64
+        t_milliseconds = (t_timedelta.dt.total_seconds()).astype('int64')
+        # Convert to numpy array
+        t_array = t_milliseconds.to_numpy()
+        
+        return t_array
