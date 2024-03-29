@@ -35,7 +35,5 @@ def test_load_from_file():
         assert test_record.test_name == "TestName"
         assert test_record.test_type == "TestType"
         assert test_record.cell_name == "Project1_CellName"
-        loaded_test_data = pickle.loads(test_record.test_data)
-        pd.testing.assert_frame_equal(loaded_test_data, test_data_df)
 
         

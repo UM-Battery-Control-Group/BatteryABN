@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import relationship
 
+from batteryabn import Constants as Const
 from .base import Base
 
 
@@ -21,7 +22,7 @@ class Project(Base):
         """
         Get the total Qmax for the project.
         """
-        return self.qmax
+        return self.qmax if self.qmax else Const.QMAX
 
     def get_i_c20(self):
         """

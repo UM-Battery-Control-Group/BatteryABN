@@ -49,7 +49,7 @@ def upgrade() -> None:
     sa.Column('cell_name', sa.String(), nullable=True),
     sa.Column('test_data', sa.LargeBinary(), nullable=True),
     sa.Column('test_metadata', sa.LargeBinary(), nullable=True),
-    sa.Column('last_update_time', sa.Integer(), nullable=True),
+    sa.Column('last_update_time', sa.BIGINT(), nullable=True),
     sa.ForeignKeyConstraint(['cell_name'], ['cells.cell_name'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('test_name')

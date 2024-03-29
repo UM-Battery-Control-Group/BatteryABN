@@ -97,6 +97,9 @@ class Processor:
         t_vdf, exp_vdf, exp_vdf_um = (cell_data_vdf[key] for key in [Const.TIME, Const.EXPANSION, Const.EXPANSION_UM])
         cycle_timestamps = cell_cycle_metrics[Const.TIME][cell_cycle_metrics[Const.CYCLE_IDC]]
         t_cycle_vdf, cycle_vdf_idxs, matched_timestamp_idxs = self.find_matching_timestamp(cycle_timestamps, t_vdf)  
+        print(f"t_cycle_vdf: {t_cycle_vdf}")
+        print(f"cycle_vdf_idxs: {cycle_vdf_idxs}")
+        print(f"matched_timestamp_idxs: {matched_timestamp_idxs}")
 
         # Add cycle indicator, align with cycles timestamps previously defined by cycler data
         Utils.add_column(cell_data_vdf, Const.CYCLE_IDC, False)
@@ -217,6 +220,7 @@ class Processor:
         unique_time_data = time_series.drop_duplicates().reset_index(drop=True)
         unique_time_data.index = unique_time_data.values
 
+        desired_timestamps = Utils.time_str_series_to_seconds(desired_timestamps)
         # Find the indices of the closest match in unique_time_data for each desired timestamp
         desired_timestamp_idxs = np.argwhere(unique_time_data.index.get_indexer(
             desired_timestamps, method="nearest", tolerance=t_threshold * 1000) != -1)[:, 0]
@@ -226,7 +230,7 @@ class Processor:
 
         # Get the actual matched timestamps and their indices in the original time_data
         matched_timestamps = unique_time_data.iloc[matched_indices_in_unique].index
-        matched_idxs = time_series.index.get_indexer_for(matched_timestamps)
+        matched_idxs = unique_time_data.index.get_indexer_for(matched_timestamps)
 
         return matched_timestamps, matched_idxs, desired_timestamp_idxs
 
@@ -253,7 +257,7 @@ class Processor:
         """
         cell_data, cell_cycle_metrics = self.combine_cycler_data(trs)
 
-        qmax = project.get_qmax() if project else Const.QMAX
+        qmax = project.get_qmax()
 
         charge_t_idxs = list(cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index)
         discharge_t_idxs = list(cell_data[cell_data[Const.DISCHARGE_CYCLE_IDC]].index)
@@ -330,7 +334,7 @@ class Processor:
         if len(cycle_idxs) == 0:
             logger.warning("No cycles detected")
             return cell_data, pd.DataFrame(columns = Const.CCM_COLUMNS)
-        cell_cycle_metrics = cell_data[Const.CCM_COLUMNS][cycle_idxs].copy()
+        cell_cycle_metrics = cell_data[Const.CCM_COLUMNS].iloc[cycle_idxs].copy()
         cell_cycle_metrics.reset_index(drop=True, inplace=True)
         logger.info(f"Found {len(cell_data)} cell data, {len(cell_cycle_metrics)} cycles")
 
@@ -396,7 +400,7 @@ class Processor:
         # Identify subcycle type. For extracting HPPC and C/20 dis/charge data later. 
         Utils.add_column(df, Const.PROTOCOL, np.nan)
 
-        cycle_idxs = np.unique(np.concatenate((charge_start_idxs, discharge_start_idxs)))
+        cycle_idxs = np.unique(np.concatenate((charge_start_idxs, discharge_start_idxs))).tolist()
         
         if len(cycle_idxs) == 0:
             logger.warning(f"No cycles detected for {tr.test_name}")
@@ -409,7 +413,7 @@ class Processor:
         df[Const.CYCLE_IDC] = df[Const.CHARGE_CYCLE_IDC]
 
         # Get the cycle metrics
-        cycle_metrics = df.iloc(cycle_idxs)
+        cycle_metrics = df.iloc[cycle_idxs].copy()
 
         for i in range(0, len(cycle_metrics)):
             t_start = cycle_metrics[Const.TIME].iloc[i]
@@ -420,14 +424,15 @@ class Processor:
             i_subcycle = df[Const.CURRENT][(t > t_start) & (t < t_end)]
             data_idx = cycle_metrics.index.tolist()[i]
             if is_cap_check:
+                hours_delta = Utils.time_string_to_seconds(t_end) - Utils.time_string_to_seconds(t_start) / 3600.0
                 # hppc: ID by # of types of current sign changes (threshold is arbitrary)
                 if len(np.where(np.diff(np.sign(i_subcycle)))[0]) > 10:
                     df.loc[data_idx, Const.PROTOCOL] = Const.HPPC
                 # C/20 charge: longer than 8 hrs and mean(I)>0. Will ID C/10 during formation as C/20...
-                elif (t_end - t_start) / 3600.0 > 8 and np.mean(i_subcycle) > 0 and np.mean(i_subcycle) < Const.QMAX / 18:
+                elif hours_delta > 8 and np.mean(i_subcycle) > 0 and np.mean(i_subcycle) < Const.QMAX / 18:
                     df.loc[data_idx, Const.PROTOCOL] = Const.C20_CHARGE
                 # C/20 discharge: longer than 8 hrs and mean(I)<0. Will ID C/10 during formation as C/20...
-                elif (t_end - t_start) / 3600.0 > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - Const.QMAX / 18:
+                elif hours_delta > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - Const.QMAX / 18:
                     df.loc[data_idx, Const.PROTOCOL] = Const.C20_DISCHARGE
             
         return df
@@ -635,11 +640,11 @@ class Processor:
         # Calculate the average for each cycle
         for i in range(len(cycle_starts) - 1):
             start_idx, end_idx = cycle_starts[i], cycle_starts[i + 1]
-            time_delta = time_series[end_idx] - time_series[start_idx]
+            time_delta = Utils.time_string_to_seconds(time_series[end_idx]) - Utils.time_string_to_seconds(time_series[start_idx])
             
             if time_delta > 0:
                 cycle_data = data[start_idx:end_idx]
-                cycle_time = time_series[start_idx:end_idx]
+                cycle_time = Utils.time_str_series_to_seconds(time_series[start_idx:end_idx])
                 average = np.trapz(cycle_data, cycle_time) / time_delta
             else:
                 average = 0

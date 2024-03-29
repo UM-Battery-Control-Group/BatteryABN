@@ -111,9 +111,9 @@ class Formatter:
         if not df.empty and Const.TIMESTAMP in df.columns:
             last_timestamp_value = df[Const.TIMESTAMP].iloc[-1]
             if isinstance(last_timestamp_value, pd.Timestamp):
-                self.last_timestamp = Utils.timestamp_to_int(last_timestamp_value)
+                self.last_update_time = Utils.timestamp_to_int(last_timestamp_value)
             else:
-                self.last_timestamp = int(last_timestamp_value)
+                self.last_update_time = int(last_timestamp_value)
 
         self.test_data = df
 

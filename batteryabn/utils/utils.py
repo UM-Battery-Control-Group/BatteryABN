@@ -3,6 +3,8 @@ import logging
 import dotenv
 import json
 import yaml
+import gzip
+import pickle
 import pandas as pd
 import numpy as np
 import io
@@ -75,6 +77,50 @@ class Utils:
 
         # If config file is not yaml or json, raise an error
         raise ValueError('Config file is not yaml or json')
+    
+    @staticmethod
+    def gzip_pikle_dump(data: pd.DataFrame, protocol=pickle.HIGHEST_PROTOCOL):
+        """
+        Dump data to a gzip compressed pickle bytes
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Data to dump
+        protocol : int, optional
+            Pickle protocol, by default pickle.HIGHEST_PROTOCOL
+
+        Returns
+        -------
+        bytes
+            Compressed pickle data
+        """
+        logger.info(f'Dump data to gzip compressed pickle bytes')
+        pickled_data = pickle.dumps(data, protocol=protocol)
+        compressed_data = gzip.compress(pickled_data)
+        
+        return compressed_data
+    
+    @staticmethod
+    def gzip_pickle_load(data):
+        """
+        Load data from a gzip compressed pickle bytes
+
+        Parameters
+        ----------
+        data : bytes
+            Compressed pickle data
+
+        Returns
+        -------
+        pd.DataFrame
+            Data loaded from compressed pickle data
+        """
+        logger.info(f'Load data from gzip compressed pickle bytes')
+        pickled_data = gzip.decompress(data)
+        data = pickle.loads(pickled_data)
+        
+        return data
     
     @staticmethod
     def formate_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -349,7 +395,7 @@ class Utils:
         return date_str
     
     @staticmethod
-    def time_str_to_seconds(t_series: pd.Series) -> np.ndarray:
+    def time_str_series_to_seconds(t_series: pd.Series) -> np.ndarray:
         """
         Convert a pandas Series of time strings in "HH:MM:SS.fff" format to an array of integers representing seconds.
 
@@ -367,3 +413,18 @@ class Utils:
         t_array = t_milliseconds.to_numpy()
         
         return t_array
+    
+    @staticmethod
+    def time_string_to_seconds(time_string: str) -> int:
+        """
+        Converts a time string in the format HH:MM:SS.mmm to seconds.
+        
+        Parameters:
+        - time_string (str): The time string to convert.
+        
+        Returns:
+        - int: The number of seconds represented by the time string.
+        """
+        hours, minutes, seconds = map(float, time_string.split(":"))
+        total_seconds = int(hours * 3600 + minutes * 60 + seconds)
+        return total_seconds

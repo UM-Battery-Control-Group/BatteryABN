@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
-import pickle
 
 from batteryabn.utils import Utils
 from .base import Base
@@ -31,25 +30,19 @@ class Cell(Base):
         """
         Load cell data from the database.
         """
-        return pickle.loads(self.cell_data)
+        return Utils.gzip_pickle_load(self.cell_data)
     
     def load_cell_cycle_metrics(self):
         """
         Load cell cycle metrics from the database.
         """
-        return pickle.loads(self.cell_cycle_metrics)
+        return Utils.gzip_pickle_load(self.cell_cycle_metrics)
     
     def load_cell_data_vdf(self):
         """
         Load cell VDF data from the database.
         """
-        return pickle.loads(self.cell_data_vdf)
-
-    def load_cell_data_rpt(self):
-        """
-        Load cell RPT data from the database.
-        """
-        return pickle.loads(self.cell_data_rpt)    
+        return Utils.gzip_pickle_load(self.cell_data_vdf)  
     
     def load_image_cell(self):
         """

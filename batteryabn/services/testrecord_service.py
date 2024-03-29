@@ -1,7 +1,6 @@
-import pickle
 from batteryabn import logger
 from batteryabn.models import TestRecord, Cell, Project
-from batteryabn.utils import Parser, Formatter
+from batteryabn.utils import Parser, Formatter, Utils
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
 
 
@@ -49,8 +48,8 @@ class TestRecordService:
         # Load data from parser and formatter
         test_record.test_type = parser.test_type
         test_record.cell_name = formatter.cell_name
-        test_record.test_data = pickle.dumps(formatter.test_data)
-        test_record.test_metadata = pickle.dumps(formatter.metadata)
+        test_record.test_data = Utils.gzip_pikle_dump(formatter.test_data)
+        test_record.test_metadata = Utils.gzip_pikle_dump(formatter.metadata)
         test_record.last_update_time = formatter.last_update_time
 
         # Check if cell exists, if not create it

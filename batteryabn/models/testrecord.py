@@ -1,9 +1,10 @@
 import pickle
 import pandas as pd
-from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
+from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, BIGINT
 from sqlalchemy.orm import relationship
 
 from batteryabn import Constants
+from batteryabn.utils import Utils
 from .base import Base
 
 
@@ -34,7 +35,7 @@ class TestRecord(Base):
     # Store test data as pickled object
     test_data = Column(LargeBinary) 
     test_metadata = Column(LargeBinary)
-    last_update_time = Column(Integer) # Unix timestamp
+    last_update_time = Column(BIGINT) # Unix timestamp
     cell = relationship("Cell", back_populates="test_records")
 
 
@@ -47,7 +48,7 @@ class TestRecord(Base):
         pd.DataFrame
             Test data
         """
-        return pickle.loads(self.test_data)
+        return Utils.gzip_pickle_load(self.test_data)
     
     def get_test_metadata(self) -> dict:
         """
@@ -58,7 +59,7 @@ class TestRecord(Base):
         dict
             Test metadata
         """
-        return pickle.loads(self.test_metadata)
+        return Utils.gzip_pickle_load(self.test_metadata)
     
     def get_cycle_type(self) -> str:
         """
