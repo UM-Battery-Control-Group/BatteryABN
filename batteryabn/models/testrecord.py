@@ -20,7 +20,7 @@ class TestRecord(Base):
     test_name : str
         Name of the battery test
     test_type : str
-        Type of the battery test, e.g. 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'
+        Type of the battery test, e.g. 'Arbin', 'BioLogic', 'Neware', 'Vdf'
     test_data : pickle
         Pickled test dataframe
     test_metadata : pickle

@@ -1,6 +1,7 @@
 import os
 import re
 import pandas as pd
+from galvani import BioLogic
 
 from batteryabn import logger, Constants as Const
 
@@ -15,16 +16,16 @@ class Parser:
         self.raw_metadata = {}
         # Define parse functions
         self.parse_functions = {
-            'Arbin': self.parse_arbin,
-            'BioLogic': self.parse_biologic,
-            'Neware': self.parse_neware,
-            'Neware_Vdf': self.parse_neware_vdf,
+            Const.ARBIN: self.parse_arbin,
+            Const.BIOLOGIC: self.parse_biologic,
+            Const.NEWARE: self.parse_neware,
+            Const.VDF: self.parse_vdf,
         }
 
     def parse(self, file_path: str) -> None:
         """
         Parse data from battery test data files.
-        Supported test types: 'BioLogic', 'Neware', 'Neware_Vdf'
+        Supported test types: 'BioLogic', 'Neware', 'Vdf'
         The data will be stored in the attributes of the class.
 
         Parameters
@@ -72,7 +73,15 @@ class Parser:
         file_path : str
             Path to BioLogic test data file
         """
-        pass
+ 
+        biologic_raw_df, start_time = self.__load_mpr(file_path)
+        
+        # Add the timestamp column
+        total_time = pd.to_timedelta(biologic_raw_df['time/s'])
+        biologic_raw_df[Const.TIMESTAMP] = start_time + total_time
+
+        self.raw_test_data = biologic_raw_df
+        
 
     def parse_neware(self, file_path: str) -> None:
         """
@@ -94,7 +103,7 @@ class Parser:
         # Store raw test data
         self.raw_test_data = neware_raw_df
 
-    def parse_neware_vdf(self, file_path: str) -> None:
+    def parse_vdf(self, file_path: str) -> None:
         """
         Parse Neware Vdf test data.
 
@@ -103,17 +112,17 @@ class Parser:
         file_path : str
             Path to Neware Vdf test data file
         """
-        neware_vdf_df, neware_vdf_meta = self.__load_vdf_csv(file_path)
+        vdf_df, vdf_meta = self.__load_vdf_csv(file_path)
 
         # Store raw test data
-        self.raw_test_data = neware_vdf_df
+        self.raw_test_data = vdf_df
         # Store raw metadata
-        self.raw_metadata.update(neware_vdf_meta)
+        self.raw_metadata.update(vdf_meta)
 
     def parse_metadata(self, test_name: str, test_type: str) -> None:
         """
         Parse metadata from battery test name and type.
-        Supported test types: 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'
+        Supported test types: 'Arbin', 'BioLogic', 'Neware', 'Vdf'
         The name of the test should follow the name rules of the test type.
 
         Parameters
@@ -121,7 +130,7 @@ class Parser:
         test_name : str
             Name of the battery test
         test_type : str
-            Type of battery test. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'
+            Type of battery test. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Vdf'
 
         Raises
         ------
@@ -254,23 +263,53 @@ class Parser:
         if start_line is None:
             raise ValueError(f"Failed to find data start marker in vdf csv file {file_path}")
 
-        # try:
+        try:
         # Read the DataFrame, assuming the first row of data contains units
-        df_units = pd.read_csv(file_path, delimiter='\t', skiprows=start_line, nrows=1)
-        header = df_units.columns
-        units = df_units.iloc[0].values
+            df_units = pd.read_csv(file_path, delimiter='\t', skiprows=start_line, nrows=1)
+            header = df_units.columns
+            units = df_units.iloc[0].values
 
-        # New header with units if available
-        new_header = [f"{header[i]} ({units[i]})" if units[i] != 'none' else header[i] for i in range(len(header))]
+            # New header with units if available
+            new_header = [f"{header[i]} ({units[i]})" if units[i] != 'none' else header[i] for i in range(len(header))]
 
-        # Read the actual data, skipping the units row
-        vdf_df = pd.read_csv(file_path, delimiter='\t', skiprows=start_line + 2, header=None, names=new_header)
+            # Read the actual data, skipping the units row
+            vdf_df = pd.read_csv(file_path, delimiter='\t', skiprows=start_line + 2, header=None, names=new_header)
 
-        logger.info(f"Loaded vdf csv file from {file_path} successfully")
-        # except:
-        #     raise ValueError(f"Failed to read vdf data from {file_path}")
+            logger.info(f"Loaded vdf csv file from {file_path} successfully")
+        except:
+            raise ValueError(f"Failed to read vdf data from {file_path}")
         
         return vdf_df, vdf_meta
+
+    def __load_mpr(self, file_path: str) -> pd.DataFrame:
+        """
+        Read the mpr file of Biologic, get the data and return the dataframe
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the mpr file
+
+        Returns
+        -------
+        df : pandas.DataFrame
+            The dataframe
+        start_timestamp : datetime.datetime
+            The start timestamp
+        """
+        try:
+            # Read the mpr file
+            mpr_file = BioLogic.MPRfile(file_path)
+            # Get the start time
+            start_time = mpr_file.timestamp
+            df = pd.DataFrame(mpr_file.data)
+            logger.info(f"Loaded mpr file from {file_path} successfully")
+
+            return df, start_time
+        
+        except Exception:
+            raise ValueError(f"Failed to load mpr file from {file_path}")
+        
 
     def clear(self) -> None:
         """

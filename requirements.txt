@@ -9,3 +9,4 @@ psycopg2-binary>=2.9.6
 scipy>=1.11.1
 rfcnt>=0.4.1
 matplotlib>=3.7.2
+galvani>=0.4.1

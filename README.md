@@ -101,7 +101,7 @@ The TestRecord class is designed to store detailed information about individual 
 
 id: A unique identifier for each test record (primary key).
 test_name: The name of the battery test, which uniquely identifies each test.
-test_type: Specifies the type of battery test (e.g., 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'), indicating the testing equipment or protocol used.
+test_type: Specifies the type of battery test (e.g., 'Arbin', 'BioLogic', 'Neware', 'Vdf'), indicating the testing equipment or protocol used.
 cell_name: A foreign key linking the test record to its associated battery cell in the cells table.
 test_data: Stores the test data as a pickled Python object. This data typically includes time series measurements taken during the test.
 test_metadata: Stores metadata about the test (e.g., test conditions, parameters) as a pickled Python dictionary.

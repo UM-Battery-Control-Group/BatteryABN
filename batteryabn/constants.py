@@ -4,6 +4,12 @@ from datetime import timedelta, timezone
 class Constants:
         
 #------------------------------------Strings:------------------------------------------#
+    ARBIN = 'Arbin'
+    BIOLOGIC = 'BioLogic'
+    NEWARE = 'Neware'
+    VDF = 'Vdf'
+
+
     TIME = 'time' # TODO: Should match Time [ms]
     STEP_IDX = 'step index'
     CYCLE_IDX = 'cycle index'
@@ -19,7 +25,7 @@ class Constants:
     TOTAL_TIME = 'total time'
     CONTACT_RESISTANCE = 'contact resistance(mω)'
     
-    FILE_TYPE_2_TEST_TYPE = {'res': 'Arbin', 'mpt': 'BioLogic', 'xlsx': 'Neware', 'csv': 'Neware_Vdf'}
+    FILE_TYPE_2_TEST_TYPE = {'res': ARBIN, 'mpr': BIOLOGIC, 'xlsx': NEWARE, 'csv': VDF}
 
     ARBIN_NAME_KEYS = [
         "Project Name",
@@ -61,7 +67,7 @@ class Constants:
         "Test ID"
     ]
 
-    NEWARE_VDF_NAME_KEYS = [
+    VDF_NAME_KEYS = [
         "Project Name",
         "Cell ID",
         "Test Type",
@@ -183,9 +189,9 @@ class Constants:
     
     BIOLOGIC_RENAME_DICT = {'cycle number': CYCLE_IDX,
                         'mode': 'step type',
-                        'time/s': TOTAL_TIME,
-                        'i': CURRENT,
-                        'ecell/v': VOLTAGE,
+                        'time/s': TIME,
+                        'i/ma': CURRENT,
+                        'ewe/v': VOLTAGE,
                         # TODO: Check the correct units for the ma.h columns
                         'capacity/ma.h': AHT,
                         'q charge/ma.h': CHARGE_CAPACITY,
@@ -198,7 +204,7 @@ class Constants:
     
     NEWARE_RENAME_DICT = {'t1(℃)': TEMPERATURE}
 
-    NEWARE_VDF_RENAME_DICT = {'test time (second)': TIME,
+    VDF_RENAME_DICT = {'test time (second)': TIME,
                         'timestamp (epoch)': TIMESTAMP,
                         'current (amp)': CURRENT,
                         'potential (volt)': VOLTAGE,

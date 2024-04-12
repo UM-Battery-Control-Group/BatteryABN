@@ -52,6 +52,6 @@ def test_parser_neware_vdf():
         assert 'voltage(v)' in formatter.test_data.columns
         assert 'current(a)' in formatter.test_data.columns
         assert 'ambient temperature (c)' in formatter.test_data.columns
-        for key in Constants.NEWARE_VDF_NAME_KEYS:
+        for key in Constants.VDF_NAME_KEYS:
             assert key in formatter.metadata
         assert formatter.cell_name == 'GMJuly2022_CELL002'

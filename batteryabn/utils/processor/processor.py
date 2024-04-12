@@ -94,12 +94,9 @@ class Processor:
         cell_data_vdf = self.combine_cycler_expansion_data(trs)
 
         # Find matching cycle timestamps from cycler data
-        t_vdf, exp_vdf, exp_vdf_um = (cell_data_vdf[key] for key in [Const.TIME, Const.EXPANSION, Const.EXPANSION_UM])
-        cycle_timestamps = cell_cycle_metrics[Const.TIME][cell_cycle_metrics[Const.CYCLE_IDC]]
+        t_vdf, exp_vdf, exp_vdf_um = (cell_data_vdf[key] for key in [Const.TIMESTAMP, Const.EXPANSION, Const.EXPANSION_UM])
+        cycle_timestamps = cell_cycle_metrics[Const.TIMESTAMP][cell_cycle_metrics[Const.CYCLE_IDC]]
         t_cycle_vdf, cycle_vdf_idxs, matched_timestamp_idxs = self.find_matching_timestamp(cycle_timestamps, t_vdf)  
-        print(f"t_cycle_vdf: {t_cycle_vdf}")
-        print(f"cycle_vdf_idxs: {cycle_vdf_idxs}")
-        print(f"matched_timestamp_idxs: {matched_timestamp_idxs}")
 
         # Add cycle indicator, align with cycles timestamps previously defined by cycler data
         Utils.add_column(cell_data_vdf, Const.CYCLE_IDC, False)
@@ -134,7 +131,7 @@ class Processor:
 
         # Add timestamps for charge cycles
         charge_cycle_idxs = list(np.where(cell_cycle_metrics[Const.CHARGE_CYCLE_IDC])[0])
-        charge_cycle_timestamps = cell_cycle_metrics[Const.TIME][cell_cycle_metrics[Const.CHARGE_CYCLE_IDC]]
+        charge_cycle_timestamps = cell_cycle_metrics[Const.TIMESTAMP][cell_cycle_metrics[Const.CHARGE_CYCLE_IDC]]
         t_charge_cycle_vdf, _, matched_charge_timestamp_idx = self.find_matching_timestamp(charge_cycle_timestamps, t_vdf)
         for i, j in enumerate(matched_charge_timestamp_idx):
             cell_cycle_metrics.loc[charge_cycle_idxs[j], Const.TIME_VDF] = t_charge_cycle_vdf[i]
@@ -165,7 +162,7 @@ class Processor:
             logger.debug("No cycler expansion data found")
             return pd.DataFrame(columns = Const.VDF_COLUMNS)
         
-        cell_data_vdf = pd.concat(dfs, ignore_index=True).sort_values(by=Const.TIME)
+        cell_data_vdf = pd.concat(dfs, ignore_index=True).sort_values(by=Const.TIMESTAMP)
 
         return cell_data_vdf
     
@@ -220,7 +217,7 @@ class Processor:
         unique_time_data = time_series.drop_duplicates().reset_index(drop=True)
         unique_time_data.index = unique_time_data.values
 
-        desired_timestamps = Utils.time_str_series_to_seconds(desired_timestamps)
+        desired_timestamps = (desired_timestamps - desired_timestamps.iloc[0]).dt.total_seconds()
         # Find the indices of the closest match in unique_time_data for each desired timestamp
         desired_timestamp_idxs = np.argwhere(unique_time_data.index.get_indexer(
             desired_timestamps, method="nearest", tolerance=t_threshold * 1000) != -1)[:, 0]
@@ -229,10 +226,11 @@ class Processor:
         matched_indices_in_unique = matched_indices_in_unique[matched_indices_in_unique != -1]
 
         # Get the actual matched timestamps and their indices in the original time_data
-        matched_timestamps = unique_time_data.iloc[matched_indices_in_unique].index
-        matched_idxs = unique_time_data.index.get_indexer_for(matched_timestamps)
+        matched_timestamp_idxs = unique_time_data.iloc[matched_indices_in_unique].index
+        # TODO: Check if this is correct?
+        matched_idxs = unique_time_data.index.get_indexer_for(matched_timestamp_idxs)
 
-        return matched_timestamps, matched_idxs, desired_timestamp_idxs
+        return matched_timestamp_idxs, matched_idxs, desired_timestamp_idxs
 
 
 #-----------------Cycler Data Processing-----------------#
@@ -261,8 +259,8 @@ class Processor:
 
         charge_t_idxs = list(cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index)
         discharge_t_idxs = list(cell_data[cell_data[Const.DISCHARGE_CYCLE_IDC]].index)
-        q_c, q_d = self.calc_capacities(cell_data[Const.TIME], cell_data[Const.AHT], charge_t_idxs, discharge_t_idxs, qmax)
-        i_avg_c, i_avg_d = self.calc_avg_cycle_data(cell_data[Const.TIME], cell_data[Const.CURRENT], charge_t_idxs, discharge_t_idxs)
+        q_c, q_d = self.calc_capacities(cell_data[Const.TIMESTAMP], cell_data[Const.AHT], charge_t_idxs, discharge_t_idxs, qmax)
+        i_avg_c, i_avg_d = self.calc_avg_cycle_data(cell_data[Const.TIMESTAMP], cell_data[Const.CURRENT], charge_t_idxs, discharge_t_idxs)
         
         # Find min/max metrics
         cycle_minmax_idxs = list(cell_data[cell_data[Const.CYCLE_IDC]].index)
@@ -358,7 +356,7 @@ class Processor:
         df = tr.get_test_data()
     
         # Get the data
-        t = df[Const.TIME].reset_index(drop=True)
+        t = df[Const.TIMESTAMP].reset_index(drop=True)
         i = df[Const.CURRENT].reset_index(drop=True)
         protocal = tr.get_cycle_type()
         lims = Const.CYCLE_ID_LIMS[protocal]
@@ -416,15 +414,15 @@ class Processor:
         cycle_metrics = df.iloc[cycle_idxs].copy()
 
         for i in range(0, len(cycle_metrics)):
-            t_start = cycle_metrics[Const.TIME].iloc[i]
+            t_start = cycle_metrics[Const.TIMESTAMP].iloc[i]
             if i == len(cycle_metrics) - 1: # if last subcycle, end of subcycle = end of file 
-                t_end = df[Const.TIME].iloc[-1]
+                t_end = df[Const.TIMESTAMP].iloc[-1]
             else: # end of subcycle = start of next subcycle
-                t_end = cycle_metrics[Const.TIME].iloc[i+1]
+                t_end = cycle_metrics[Const.TIMESTAMP].iloc[i+1]
             i_subcycle = df[Const.CURRENT][(t > t_start) & (t < t_end)]
             data_idx = cycle_metrics.index.tolist()[i]
             if is_cap_check:
-                hours_delta = Utils.time_string_to_seconds(t_end) - Utils.time_string_to_seconds(t_start) / 3600.0
+                hours_delta = (t_end - t_start).total_seconds() / 3600
                 # hppc: ID by # of types of current sign changes (threshold is arbitrary)
                 if len(np.where(np.diff(np.sign(i_subcycle)))[0]) > 10:
                     df.loc[data_idx, Const.PROTOCOL] = Const.HPPC
@@ -456,7 +454,7 @@ class Processor:
         discharge_start_idx: np.ndarray
             Array of indices where discharging cycles start
         """
-        t_timedelta = pd.to_timedelta(t)
+        t_timedelta = t - t.iloc[0]
         t_seconds = t_timedelta.dt.total_seconds()
         ic = (i.values > 1e-5).astype(int)
         Id = (i.values < -1e-5).astype(int)
@@ -611,13 +609,13 @@ class Processor:
         
         return np.array(charge_capacities), np.array(discharge_capacities)
 
-    def calc_avg_cycle_data(self, time_series: np.array, data: np.array, charge_idxs: list, discharge_idxs: list):
+    def calc_avg_cycle_data(self, time_stamps: list, data: np.array, charge_idxs: list, discharge_idxs: list):
         """
         Calculate average data (e.g., voltage, temperature, or expansion) for each cycle.
 
         Parameters:
-        time_series : numpy array
-            Time data
+        time_stamps : list
+            Time stamps
         data : numpy array
             Data to calculate average
         charge_idxs : list
@@ -632,7 +630,7 @@ class Processor:
             Averages of discharge cycles
         """
         # Combine and sort idxs to mark the start of each cycle, including the last data point
-        cycle_starts = sorted(charge_idxs + discharge_idxs + [len(time_series) - 1])
+        cycle_starts = sorted(charge_idxs + discharge_idxs + [len(time_stamps) - 1])
 
         averages_charge = []
         averages_discharge = []
@@ -640,11 +638,11 @@ class Processor:
         # Calculate the average for each cycle
         for i in range(len(cycle_starts) - 1):
             start_idx, end_idx = cycle_starts[i], cycle_starts[i + 1]
-            time_delta = Utils.time_string_to_seconds(time_series[end_idx]) - Utils.time_string_to_seconds(time_series[start_idx])
+            time_delta = (time_stamps[end_idx] - time_stamps[start_idx]).total_seconds()
             
             if time_delta > 0:
                 cycle_data = data[start_idx:end_idx]
-                cycle_time = Utils.time_str_series_to_seconds(time_series[start_idx:end_idx])
+                cycle_time = time_stamps[start_idx:end_idx]
                 average = np.trapz(cycle_data, cycle_time) / time_delta
             else:
                 average = 0
@@ -728,14 +726,14 @@ class Processor:
             pre_rpt_subcycle = pd.DataFrame()
 
             for i in rpt_idxs:
-                t_start = self.cell_cycle_metrics.at[i, Const.TIME] - 30
-                t_end = self.cell_data[Const.TIME].iloc[-1] + 30 if i + 1 >= len(self.cell_cycle_metrics) else self.cell_cycle_metrics.at[i + 1, Const.TIME] + 30
+                t_start = self.cell_cycle_metrics.at[i, Const.TIMESTAMP] - 30
+                t_end = self.cell_data[Const.TIMESTAMP].iloc[-1] + 30 if i + 1 >= len(self.cell_cycle_metrics) else self.cell_cycle_metrics.at[i + 1, Const.TIMESTAMP] + 30
                 
                 rpt_subcycle = self.cell_cycle_metrics.loc[i, cycle_summary_cols].to_dict()
                 rpt_subcycle[Const.RPT] = rpt_file
-                t = self.cell_data[Const.TIME]
+                t = self.cell_data[Const.TIMESTAMP]
                 rpt_subcycle[Const.DATA] = self.cell_data.loc[(t > t_start) & (t < t_end), 
-                                        [Const.TIME, Const.CURRENT, Const.VOLTAGE, Const.AHT, Const.TEMPERATURE, Const.STEP_IDX]]
+                                        [Const.TIMESTAMP, Const.CURRENT, Const.VOLTAGE, Const.AHT, Const.TEMPERATURE, Const.STEP_IDX]]
 
                 self.update_cycle_metrics_hppc(rpt_subcycle, i)
 
@@ -746,7 +744,7 @@ class Processor:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = pd.DataFrame()
                     
-                t_vdf = self.cell_data_vdf[Const.TIME]
+                t_vdf = self.cell_data_vdf[Const.TIMESTAMP]
                 if not t_vdf.empty:
                     rpt_subcycle[Const.DATA_VDF] = self.cell_data_vdf.loc[(t_vdf > t_start) & (t_vdf < t_end)]
 
@@ -762,7 +760,7 @@ class Processor:
         cell_rpt_data = cell_rpt_data[cols]
 
         # Sort the DataFrame based on the first timestamp in 'Data' column
-        cell_rpt_data = cell_rpt_data.sort_values(by=Const.DATA, key=lambda x: x[Const.TIME].iloc[0] if not x.empty else pd.NaT)
+        cell_rpt_data = cell_rpt_data.sort_values(by=Const.DATA, key=lambda x: x[Const.TIMESTAMP].iloc[0] if not x.empty else pd.NaT)
         
 
     def update_cycle_metrics_hppc(self, rpt_subcycle: dict, i: int):
@@ -778,7 +776,7 @@ class Processor:
         """
         if rpt_subcycle[Const.PROTOCOL] == Const.HPPC:
             # Extract necessary data for get_Rs_SOC function
-            time_ms = rpt_subcycle[Const.DATA][0][Const.TIME] / 1000.0
+            time_ms = rpt_subcycle[Const.DATA][0][Const.TIMESTAMP] / 1000.0
             current = rpt_subcycle[Const.DATA][0][Const.CURRENT]
             voltage = rpt_subcycle[Const.DATA][0][Const.VOLTAGE]
             ah_throughput = rpt_subcycle[Const.DATA][0][Const.AHT]
@@ -846,10 +844,10 @@ class Processor:
         d_dh = dh_rpt[Const.DATA][0]
         d_dh = d_dh.reset_index(drop=True)
         d_ch = d_ch.reset_index(drop=True)
-        d_dh[Const.TIME] = d_dh[Const.TIME] - d_dh[Const.TIME].iloc[0]
-        d_ch[Const.TIME] = d_ch[Const.TIME] - d_ch[Const.TIME].iloc[0]
-        d_ch = d_ch[d_ch[Const.TIME] <= 1e8]
-        d_dh = d_dh[d_dh[Const.TIME] <= 1e8]
+        d_dh[Const.TIMESTAMP] = d_dh[Const.TIMESTAMP] - d_dh[Const.TIMESTAMP].iloc[0]
+        d_ch[Const.TIMESTAMP] = d_ch[Const.TIMESTAMP] - d_ch[Const.TIMESTAMP].iloc[0]
+        d_ch = d_ch[d_ch[Const.TIMESTAMP] <= 1e8]
+        d_dh = d_dh[d_dh[Const.TIMESTAMP] <= 1e8]
         d_ch1 = d_ch[(d_ch[Const.CURRENT] > 0)] # charge current is + 
         d_dh1 = d_dh[(d_dh[Const.CURRENT] < 0)] # discharge current is - 
         d_ch = d_ch[(d_ch[Const.CURRENT] > (i_slow - i_threshold)) & (d_ch[Const.CURRENT] < (i_slow + i_threshold))]
@@ -862,14 +860,14 @@ class Processor:
         d_ch[Const.AHT] = d_ch[Const.AHT] - d_ch[Const.AHT].iloc[0]
         d_dh[Const.AHT] = d_dh[Const.AHT] - d_dh[Const.AHT].iloc[0]
 
-        t_d = d_dh[Const.TIME].to_numpy()
+        t_d = d_dh[Const.TIMESTAMP].to_numpy()
         t_d = t_d - t_d[0]
         t_d = t_d / 1e3 
         i_d = d_dh[Const.CURRENT].to_numpy()
         v_d = d_dh[Const.VOLTAGE].to_numpy()
         q_d = integrate.cumtrapz(abs(i_d), t_d/3600)
         q_d = np.append(q_d,q_d[-1])
-        t_c = d_ch[Const.TIME].to_numpy()
+        t_c = d_ch[Const.TIMESTAMP].to_numpy()
         t_c = t_c - t_c[0]
         t_c = t_c/1e3
         i_c = d_ch[Const.CURRENT].to_numpy()

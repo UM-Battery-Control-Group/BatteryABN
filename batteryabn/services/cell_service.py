@@ -1,5 +1,5 @@
 import pickle
-from batteryabn import logger
+from batteryabn import logger, Constants as Const
 from batteryabn.models import Cell, Project
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
 from batteryabn.utils import Processor, Viewer, Utils
@@ -145,7 +145,7 @@ class CellService:
         trs = self.test_record_repository.find_by_cell_name(cell.cell_name)
         cycler_trs, vdf_trs = [], []
         for tr in trs:
-            if tr.test_type == 'Neware_Vdf':
+            if tr.test_type == Const.VDF:
                 vdf_trs.append(tr)
             else:
                 cycler_trs.append(tr)

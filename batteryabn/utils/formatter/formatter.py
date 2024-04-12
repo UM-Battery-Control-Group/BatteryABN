@@ -36,7 +36,7 @@ class Formatter:
             Raw battery test metadata
 
         test_type : str
-            Type of battery test data. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'
+            Type of battery test data. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Vdf'
 
         Returns
         -------
@@ -59,7 +59,7 @@ class Formatter:
             Raw battery test data
 
         test_type : str
-            Type of battery test data. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Neware_Vdf'
+            Type of battery test data. Supported types: 'Arbin', 'BioLogic', 'Neware', 'Vdf'
 
         is_cycle : bool, optional
             Whether the data is cycle data
@@ -80,31 +80,40 @@ class Formatter:
         df = Utils.rename_columns(df, rename_dict)
 
         # Format the data based on test type
-        if test_type.lower() == 'arbin':
+        if test_type == Const.ARBIN:
             Utils.add_column(df, Const.TEMPERATURE)
-        elif test_type.lower() == 'biologic':
+        elif test_type == Const.BIOLOGIC:
             if(max(abs(df[Const.CURRENT]))>20): 
                 # current data is ma vs A divide by 1000.
                 df[Const.CURRENT] = df[Const.CURRENT]/1000
-                df[Const.AHT] = df[Const.AHT]/1000
-        elif test_type.lower() == 'neware':
+                # TODO: AHT sometime is missing in the data. Assign it to 0 if it is missing
+                if Const.AHT not in df.columns:
+                    df[Const.AHT] = 0
+                else:   
+                    df[Const.AHT] = df[Const.AHT]/1000 
+        elif test_type == Const.NEWARE:
             if df[Const.TEMPERATURE] is not None:
                 df[Const.TEMPERATURE] = np.where((df[Const.TEMPERATURE] >= 200) & (df[Const.TEMPERATURE] <250), np.nan, df[Const.TEMPERATURE]) 
             
-            # For the formation test, calculate AHT from integrating current 
-            if self.metadata.get('Test Type').lower() == 'f':
-                # From integrating current.... some formation files had wrong units
-                time_reset = df[Const.TIME].reset_index(drop=True)
-                aht_calculated = integrate.cumtrapz(
-                    abs(time_reset), 
-                    (time_reset - time_reset[0]) / 1000
-                ) / 3600
-                aht_calculated = np.append(aht_calculated, aht_calculated[-1])
-                df[Const.AHT] = aht_calculated
+            # Formate the time column from HH:MM:SS.fff to seconds
+            df[Const.TIME] = Utils.time_str_series_to_seconds(df[Const.TIME])
+
+
+            # For the formation test, calculate AHT from integrating current, 
+            # TODO: Check if the timestamp column is uesed correctly when calculating AHT
+            # if self.metadata.get('Test Type').lower() == 'f':
+            #     # From integrating current.... some formation files had wrong units
+            #     time_reset = df[Const.TIMESTAMP].reset_index(drop=True)
+            #     aht_calculated = integrate.cumtrapz(
+            #         abs(time_reset), 
+            #         (time_reset - time_reset[0])
+            #     ) / 3600
+            #     aht_calculated = np.append(aht_calculated, aht_calculated[-1])
+            #     df[Const.AHT] = aht_calculated
 
         # Check the data lengths for cycle data
-        if test_type.lower() != 'neware_vdf':
-            lengths = [len(df[column].reset_index(drop=True)) for column in [Const.TIME, Const.CURRENT, Const.VOLTAGE, Const.STEP_IDX]]
+        if test_type != Const.VDF:
+            lengths = [len(df[column].reset_index(drop=True)) for column in [Const.TIME, Const.CURRENT, Const.VOLTAGE]]
             if len(set(lengths)) > 1:
                 raise ValueError(f"Inconsistent data lengths in the dataframe")
 
