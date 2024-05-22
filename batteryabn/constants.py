@@ -193,7 +193,7 @@ class Constants:
                         'i/ma': CURRENT,
                         'ewe/v': VOLTAGE,
                         # TODO: Check the correct units for the ma.h columns
-                        'capacity/ma.h': AHT,
+                        'q charge/discharge/ma.h': AHT,
                         'q charge/ma.h': CHARGE_CAPACITY,
                         'q discharge/ma.h': DISCHARGE_CAPACITY,
                         'energy charge/w.h': CHARGE_ENERGY,

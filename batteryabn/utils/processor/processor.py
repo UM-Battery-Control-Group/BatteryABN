@@ -154,6 +154,7 @@ class Processor:
             Combined cycler expansion data
         """
         dfs = []
+        trs = self.sort_trs(trs)
         for tr in trs:
             dfs.append(self.process_cycler_expansion_tr(tr))
         logger.info(f"Combining {len(dfs)} dataframes")
@@ -213,10 +214,11 @@ class Processor:
         np.ndarray
             Desired timestamp indices
         """
+        if len(desired_timestamps) == 0:
+            return [], [], []
         # Remove duplicates from time_data and create a new series with unique timestamps as index
         unique_time_data = time_series.drop_duplicates().reset_index(drop=True)
         unique_time_data.index = unique_time_data.values
-
         desired_timestamps = (desired_timestamps - desired_timestamps.iloc[0]).dt.total_seconds()
         # Find the indices of the closest match in unique_time_data for each desired timestamp
         desired_timestamp_idxs = np.argwhere(unique_time_data.index.get_indexer(
@@ -308,6 +310,7 @@ class Processor:
             Cycler cycle metrics
         """
         dfs =[]
+        trs = self.sort_trs(trs)
         for tr in trs:
             dfs.append(self.process_cycle_tr(tr))
         logger.info(f"Combining {len(dfs)} dataframes")
@@ -364,7 +367,7 @@ class Processor:
         # These parameters could be used to filter cycle index in the future
         v = df[Const.VOLTAGE].reset_index(drop=True)
         step_idxs = df[Const.STEP_IDX].reset_index(drop=True)
-        cycle_idxs = df[Const.CYCLE_IDX].reset_index(drop=True)
+        # cycle_idxs = df[Const.CYCLE_IDX].reset_index(drop=True)
         v_max_cycle, v_min_cycle, dah_min, dt_min = (
             lims[key] for key in (
                 Const.V_MAX_CYCLE, 
@@ -1140,3 +1143,19 @@ class Processor:
         ocp = up - un
         
         return ocp
+    
+    def sort_trs(self, trs: list[TestRecord]):
+        """
+        Sort the TestRecords based on the timestamp.
+
+        Parameters
+        ----------
+        trs : list[TestRecord]
+            List of TestRecords
+
+        Returns
+        -------
+        list[TestRecord]
+            Sorted list of TestRecords
+        """
+        return sorted(trs, key=lambda x: x.last_update_time)

@@ -253,7 +253,8 @@ class Utils:
             DataFrame with added column
         """
         logger.info(f'Add column {column_name} to DataFrame')
-        df[column_name] = pd.Series([value] * len(df))
+        if column_name not in df.columns:
+            df[column_name] = pd.Series([value] * len(df))
         return df
 
     @staticmethod
