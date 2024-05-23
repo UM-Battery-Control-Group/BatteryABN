@@ -311,8 +311,12 @@ class Processor:
         """
         dfs =[]
         trs = self.sort_trs(trs)
+        # Calculate the AHT based on the previous test record
+        pre_aht = 0
         for tr in trs:
-            dfs.append(self.process_cycle_tr(tr))
+            df = self.process_cycle_tr(tr, pre_aht)
+            pre_aht = df[Const.AHT].iloc[-1]
+            dfs.append(df)
         logger.info(f"Combining {len(dfs)} dataframes")
         cell_data = pd.concat(dfs, ignore_index=True)
 
@@ -341,7 +345,7 @@ class Processor:
 
         return cell_data, cell_cycle_metrics
             
-    def process_cycle_tr(self, tr: TestRecord):
+    def process_cycle_tr(self, tr: TestRecord, pre_aht: float):
         """
         Process and format cycle data for a single test record.
 
@@ -349,6 +353,8 @@ class Processor:
         ----------
         tr : TestRecord
             TestRecord object
+        pre_aht : float
+            Previous AHT value
 
         Returns
         -------
@@ -358,6 +364,9 @@ class Processor:
         logger.debug(f"Processing cycle data for {tr.test_name}")
         df = tr.get_test_data()
     
+        # Add previous AHT to current AHT column
+        df[Const.AHT] = df[Const.AHT] + pre_aht
+
         # Get the data
         t = df[Const.TIMESTAMP].reset_index(drop=True)
         i = df[Const.CURRENT].reset_index(drop=True)
@@ -435,7 +444,7 @@ class Processor:
                 # C/20 discharge: longer than 8 hrs and mean(I)<0. Will ID C/10 during formation as C/20...
                 elif hours_delta > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - Const.QMAX / 18:
                     df.loc[data_idx, Const.PROTOCOL] = Const.C20_DISCHARGE
-            
+
         return df
 
 
