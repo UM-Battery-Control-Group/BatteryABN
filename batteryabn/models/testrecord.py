@@ -77,24 +77,6 @@ class TestRecord(Base):
         # Default  
         return Constants.CYCLE_TYPES[0]
     
-    def get_calibration_parameters(self):
-        """
-        Get calibration parameters for the test.
-
-        Returns
-        -------
-        x1 : float
-            Calibration parameter 1
-        x2 : float
-            Calibration parameter 2
-        c : float
-            Calibration parameter 3
-        """
-        # TODO: Implement calibration parameters.
-        # It should associate the test with the cell and test time to get the calibration parameters
-        # Temporarily return some default values
-        return 1.6473, -27.134, 138.74
-    
     def is_rpt(self) -> bool:
         """
         Check if the test is a RPT test.

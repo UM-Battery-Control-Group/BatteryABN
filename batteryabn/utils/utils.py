@@ -368,32 +368,6 @@ class Utils:
 
         return int(dt.timestamp())
 
-    @staticmethod
-    def timestamp_to_str(timestamp: float, format: str = "%Y-%m-%d %H:%M:%S.%f", tz_info = Const.DEFAULT_TIME_ZONE_INFO):
-        """
-        Function to convert a timestamp to a string date
-
-        Parameters
-        ----------
-        timestamp : float
-            Unix timestamp
-        format : str, optional
-            Date format, by default "%Y-%m-%d %H:%M:%S.%f"
-        tz_info : timezone, optional
-            Timezone info, by default Const.DEFAULT_TIME_ZONE_INFO
-
-        Returns
-        -------
-        str
-            Date string
-        """
-        try:
-            dt = datetime.fromtimestamp(timestamp, tz_info)
-        except ValueError:
-            logger.error(f'Invalid timestamp: {timestamp}')
-
-        date_str = dt.strftime(format)
-        return date_str
     
     @staticmethod
     def time_str_series_to_seconds(t_series: pd.Series) -> np.ndarray:
@@ -429,3 +403,16 @@ class Utils:
         hours, minutes, seconds = map(float, time_string.split(":"))
         total_seconds = int(hours * 3600 + minutes * 60 + seconds)
         return total_seconds
+    
+    @staticmethod
+    def datetime_to_unix_timestamp(dt: datetime) -> int:
+        """
+        Converts a datetime object to a Unix timestamp.
+
+        Parameters:
+        - dt (datetime): The datetime object to convert.
+
+        Returns:
+        - int: The Unix timestamp.
+        """
+        return int(dt.timestamp())

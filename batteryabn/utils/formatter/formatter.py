@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy import integrate
+from datetime import datetime
 
 from batteryabn import logger, Constants as Const
 from batteryabn.utils import Utils
@@ -22,6 +23,7 @@ class Formatter:
         self.metadata = {}
         self.cell_name = None # Cell name for the test data
         self.last_update_time = None # Last update timestamp for the test data
+        self.calibration_parameters = {}
 
     def format_data(self, data: pd.DataFrame, metadata: pd.DataFrame, test_type: str) -> pd.DataFrame:
         """
@@ -84,6 +86,10 @@ class Formatter:
             Utils.add_column(df, Const.TEMPERATURE)
             Utils.add_column(df, Const.STEP_IDX)
             Utils.add_column(df, Const.AHT)
+        else:
+            # Get the Calibration Parameters X1, X2 and C from the cell and start & removal time
+            # TODO: Better way to get calibration parameters instead of using sanity check csv file 
+            df = self.add_calibration_parameters(df)
 
         # Calculate AHT from integrating current
         time_reset = df[Const.TIMESTAMP].reset_index(drop=True)
@@ -109,11 +115,6 @@ class Formatter:
             
             # Formate the time column from HH:MM:SS.fff to seconds
             df[Const.TIME] = Utils.time_str_series_to_seconds(df[Const.TIME])
-
-            # For the formation test, calculate AHT from integrating current, 
-            # TODO: Check if the timestamp column is uesed correctly when calculating AHT
-            # if self.metadata.get('Test Type').lower() == 'f':
-            # From integrating current.... some formation files had wrong units
 
         # Check the data lengths for cycle data
         if test_type != Const.VDF:
@@ -147,6 +148,76 @@ class Formatter:
         # Get cell name from metadata
         cell_name = metadata.get('Project Name') + '_' + metadata.get('Cell ID')
         self.cell_name = cell_name
+
+    def format_calibration_parameters(self, calibration_parameters: dict) -> None:
+        """
+        Format calibration parameters.
+
+        Parameters
+        ----------
+        calibration_parameters : dict
+            Calibration parameters
+        """
+        formatted_parameters = {}
+
+        for cell_name, periods in calibration_parameters.items():
+            # Sort the periods by start date
+            periods.sort(key=lambda x: datetime.strptime(x[0], "%m/%d/%Y"))
+
+            time_dict = {}
+
+            for start, end, x1, x2, c in periods:
+                #TODO: Use timestamp or datetime object instead of string
+                start_time = datetime.strptime(start, "%m/%d/%Y")
+                start_time = Utils.datetime_to_unix_timestamp(start_time)
+                end_time = datetime.strptime(end, "%m/%d/%Y")
+                end_time = Utils.datetime_to_unix_timestamp(end_time)
+
+                # Get the existing overlapping keys
+                overlapping_keys = [k for k in time_dict.keys() if k <= start_time]
+
+                # Remove the overlapping keys
+                for key in overlapping_keys:
+                    if key < end_time:
+                        del time_dict[key]
+                # Add the new key
+                time_dict[start_time] = (x1, x2, c)
+                time_dict[end_time] = (Const.X1, Const.X2, Const.C)
+
+            formatted_parameters[cell_name] = time_dict
+
+        self.calibration_parameters = formatted_parameters
+
+    def add_calibration_parameters(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add calibration parameters to the test data.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Test data
+
+        Returns
+        -------
+        pd.DataFrame
+            Test data with calibration parameters
+        """
+        cell_name = self.cell_name
+        calibration_parameters = self.calibration_parameters.get(cell_name, {})
+
+        Utils.add_column(df, Const.CALIBRATION_X1, Const.X1)
+        Utils.add_column(df, Const.CALIBRATION_X2, Const.X2)
+        Utils.add_column(df, Const.CALIBRATION_C, Const.C)
+
+        if not calibration_parameters:
+            return df
+
+        for time, parameters in calibration_parameters.items():
+            x1, x2, c = parameters
+            df.loc[(df[Const.TIMESTAMP] >= time), Const.CALIBRATION_X1] = x1
+            df.loc[(df[Const.TIMESTAMP] >= time), Const.CALIBRATION_X2] = x2
+            df.loc[(df[Const.TIMESTAMP] >= time), Const.CALIBRATION_C] = c
+        return df
 
     def clear(self) -> None:
         """

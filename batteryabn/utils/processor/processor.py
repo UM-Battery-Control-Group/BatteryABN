@@ -185,8 +185,9 @@ class Processor:
         df = tr.get_test_data()
         df = df[(df[Const.EXPANSION] >1e1) & (df[Const.EXPANSION] <1e7)] #keep good signals 
 
-        x1, x2, c = tr.get_calibration_parameters()
-        df[Const.EXPANSION_UM] = 1000 * (30.6 - (x2 * (df[Const.EXPANSION] / 10**6)**2 + x1 * (df[Const.EXPANSION] / 10**6) + c))
+        # TODO: These part could be moved into formatter if the calibration data does not change to improve performance
+        df[Const.EXPANSION_UM] = 1000 * (30.6 - (df[Const.CALIBRATION_X2] * (df[Const.EXPANSION] / 10**6)**2 + df[Const.CALIBRATION_X1] * (df[Const.EXPANSION] / 10**6) + df[Const.CALIBRATION_C]))
+        print(f"X1: {df[Const.CALIBRATION_X1].iloc[0]}, X2: {df[Const.CALIBRATION_X2].iloc[0]}, C: {df[Const.CALIBRATION_C].iloc[0]}")
         df[Const.TEMPERATURE] = np.where((df[Const.TEMPERATURE] >= 200) & (df[Const.TEMPERATURE] <250), np.nan, df[Const.TEMPERATURE]) 
 
         return df

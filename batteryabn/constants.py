@@ -137,6 +137,10 @@ class Constants:
     CCM_COLUMNS_ADDITIONAL_VDF = [TIME_VDF, MIN_CYCLE_EXPANSION, MAX_CYCLE_EXPANSION, REV_CYCLE_EXPANSION, 
                                 MIN_CYCLE_EXPANSION_UM, MAX_CYCLE_EXPANSION_UM, REV_CYCLE_EXPANSION_UM, 
                                 DRIVE_CURRENT, EXPANSION_STDDEV, REF_STDDEV]
+    
+    CALIBRATION_X1 = 'calibration x1'
+    CALIBRATION_X2 = 'calibration x2'
+    CALIBRATION_C = 'calibration c'
 
 
     #----------------------------------RPT-------------------------------------#
@@ -273,6 +277,10 @@ class Constants:
     X0 = [4.2,0.85,5.5,0.3]
     LB = [1, 0, 1, 0]
     UB = [5, 1, 6.5, 1]
+
+    X1 = 1.6473
+    X2 = -27.134
+    C = 138.74
 
     W1 = 0.2
     W2 = 1

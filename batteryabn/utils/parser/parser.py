@@ -1,5 +1,6 @@
 import os
 import re
+import csv
 import pandas as pd
 from galvani import BioLogic
 
@@ -14,6 +15,7 @@ class Parser:
         self.test_type = None
         self.raw_test_data = pd.DataFrame(dtype=object)
         self.raw_metadata = {}
+        self.calibration_parameters = {}
         # Define parse functions
         self.parse_functions = {
             Const.ARBIN: self.parse_arbin,
@@ -144,6 +146,60 @@ class Parser:
             self.raw_metadata.update(dict(zip(keys, values)))
         except:
             raise ValueError(f'Test name {test_name} does not match the name rules of {test_type}')
+        
+
+    def parse_calibration_parameters(self, file_path: str) -> None:
+        """
+        Get the calibration parameters from the csv file.
+        TODO: The whole calibration in db or better config file.
+        
+        Parameters
+        ----------
+        file_path : str
+            The path to the calibration csv file
+        """
+        calibration_parameters = {}
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                rows = list(csv.reader(f))
+            logger.info(f"Loaded csv file from {file_path} successfully")
+        except FileNotFoundError:
+            logger.error(f"File not found: {file_path}")
+            return calibration_parameters
+
+        calibration_csv = iter(rows)
+        header = next(calibration_csv)
+
+        #TODO: The format of the calibration file is not good, need to be updated
+        project_index = header.index('Project')
+        cell_name_index = header.index('Cell Name')
+        x1_index = header.index('X1')
+        x2_index = header.index('X2')
+        c_index = header.index('C')
+        start_date_index = header.index('Start Date (Aging)')
+        removal_date_index = header.index('Removal Date')
+
+        # TODO: Default values should be fetched from the database in the future
+        default_X1, default_X2, default_C = 1.6473, -27.134, 138.74
+
+        for row in calibration_csv:
+            project = row[project_index]
+            cell_number = row[cell_name_index]
+            start_date = row[start_date_index] if row[start_date_index] else '01/01/2010'
+            removal_date = row[removal_date_index] if row[removal_date_index] else '01/01/2030'
+
+            x1 = float(row[x1_index]) if row[x1_index] else default_X1
+            x2 = float(row[x2_index]) if row[x2_index] else default_X2
+            c = float(row[c_index]) if row[c_index] else default_C
+
+            cell_name = f"{project}_CELL{cell_number.zfill(3)}"
+
+            if cell_name not in calibration_parameters:
+                calibration_parameters[cell_name] = []
+
+            calibration_parameters[cell_name].append((start_date, removal_date, x1, x2, c))
+        self.calibration_parameters = calibration_parameters
         
     def __get_test_name(self, file_path: str) -> str:
         """
