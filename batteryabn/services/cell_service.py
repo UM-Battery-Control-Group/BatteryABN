@@ -87,6 +87,32 @@ class CellService:
             logger.error(f'Failed to save processed data for cell: {cell_name}. Error: {e}')
             raise e
 
+    def get_combined_cell_data(self, cell_name: str, processor: Processor):
+        """
+        Get combined cell data for a cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The unique name of the cell.
+        processor : Processor
+            Processor object with processed cell data
+
+        Returns
+        -------
+        dict
+            Combined cell data
+        """
+        cell = self.find_cell_by_name(cell_name)
+
+        if not cell:
+            logger.error(f'Cell not found: {cell_name}')
+            return
+        
+        cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
+        # Process cell data
+        return processor.combine_data(cycler_trs, vdf_trs)
+
 
     def change_cell_project(self, cell_name: str, new_project_name: str):
         """

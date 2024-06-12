@@ -23,3 +23,7 @@ fig_cll = cell.load_image_cell()
 fig_ccm_aht = cell.load_image_ccm_aht()
 
 plt.show()
+
+combined_data = cell_service.get_combined_cell_data(cell_name, processor)
+print(combined_data.columns)
+print(f'Length of combined data: {len(combined_data)}') 

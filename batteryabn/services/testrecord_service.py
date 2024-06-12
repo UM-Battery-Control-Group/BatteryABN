@@ -13,7 +13,7 @@ class TestRecordService:
         self.test_record_repository = test_record_repository
         self.project_repository = project_repository
 
-    def create_and_save_tr(self, path: str, parser: Parser, formatter: Formatter):
+    def create_and_save_tr(self, path: str, parser: Parser, formatter: Formatter, reset: bool = False):
         """
         This method creates a new TestRecord and saves it to the database. 
         If the cell associated with the test record does not exist, it is created.
@@ -26,6 +26,8 @@ class TestRecordService:
             Parser object to parse test data
         formatter : Formatter
             Formatter object to format test data
+        reset : bool, optional
+            If True, the test record will be created even if it already exists, by default False
         """
         logger.info(f'Creating new test record from file: {path}')
         parser.parse(path)
@@ -36,7 +38,7 @@ class TestRecordService:
 
         # If test record exists and is up-to-date, no action needed
         # TODO: Size check
-        if test_record and test_record.last_update_time >= formatter.last_update_time:
+        if not reset and test_record and test_record.last_update_time >= formatter.last_update_time:
             logger.info(f'Test record already exists and is up-to-date: {test_name}')
             return
 

@@ -1169,3 +1169,56 @@ class Processor:
             Sorted list of TestRecords
         """
         return sorted(trs, key=lambda x: x.last_update_time)
+    
+    
+    # ---------------------------------#
+
+    def combine_data(self, cycler_trs: list[TestRecord], vdf_trs: list[TestRecord]) -> pd.DataFrame:
+        """
+        Combine the data for all the TestRecords for a single cell. 
+        Downsample the cycle data to match the VDF data.
+        The columns of the combined data are the union of the columns of the cycler and VDF data and the test name.
+
+        Parameters
+        ----------
+        cycler_trs : list[TestRecord]
+            List of cycler TestRecords
+        vdf_trs : list[TestRecord]
+            List of VDF TestRecords
+
+        Returns
+        -------
+        pd.DataFrame
+            Combined data
+        """
+
+        cycler_trs = self.sort_trs(cycler_trs)
+        vdf_trs = self.sort_trs(vdf_trs)
+
+        cycler_dfs, vdf_dfs = [], []
+        for cycler_tr in cycler_trs:
+            df = cycler_tr.get_test_data()
+            Utils.add_column(df, 'cycle test name', cycler_tr.test_name)
+            cycler_dfs.append(df)
+        for vdf_tr in vdf_trs:
+            df = vdf_tr.get_test_data()
+            Utils.add_column(df, 'vdf test name', vdf_tr.test_name)
+            vdf_dfs.append(df)
+        cycler_dfs = pd.concat(cycler_dfs, ignore_index=True)
+        vdf_dfs = pd.concat(vdf_dfs, ignore_index=True)
+        vdf_dfs[Const.TIMESTAMP] = pd.to_datetime(df[Const.TIMESTAMP], unit='ms')
+
+        cycler_dfs.set_index(Const.TIMESTAMP, inplace=True)
+        vdf_dfs.set_index(Const.TIMESTAMP, inplace=True)
+        cycler_dfs.reset_index(inplace=True)
+        vdf_dfs.reset_index(inplace=True)
+        cycler_dfs.dropna(subset=[Const.TIMESTAMP], inplace=True)
+        vdf_dfs.dropna(subset=[Const.TIMESTAMP], inplace=True)
+
+        print(f"VDF start time: {vdf_dfs[Const.TIMESTAMP].iloc[0]}, end time: {vdf_dfs[Const.TIMESTAMP].iloc[-1]}")
+        print(f"Cycler start time: {cycler_dfs[Const.TIMESTAMP].iloc[0]}, end time: {cycler_dfs[Const.TIMESTAMP].iloc[-1]}")
+
+        merged_df = pd.merge_asof(cycler_dfs, vdf_dfs, on=Const.TIMESTAMP, direction='nearest', tolerance=pd.Timedelta('1000s'))
+        merged_df.dropna(inplace=True)
+
+        return merged_df
