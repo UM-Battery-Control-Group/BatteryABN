@@ -48,8 +48,9 @@ test_record_service = TestRecordService(cell_repository, test_record_repository,
 
 parser.parse_calibration_parameters(calibration_parameters_path)
 formatter.format_calibration_parameters(parser.calibration_parameters)
-for path in paths:
-    test_record_service.create_and_save_tr(path, parser, formatter, reset=True)
+# for path in paths:
+#     test_record_service.create_and_save_tr(path, parser, formatter, reset=True)
+test_record_service.create_and_save_trs(data_directory, key_word='GMJuly2022_CELL089', parser=parser, formatter=formatter, reset=True)
 
 # Check that the test records were added to the database
 # trs = test_record_service.find_test_records_by_cell_name('GMJuly2022_CELL002')

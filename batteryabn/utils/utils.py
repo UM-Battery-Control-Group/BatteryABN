@@ -416,3 +416,24 @@ class Utils:
         - int: The Unix timestamp.
         """
         return int(dt.timestamp())
+    
+    @staticmethod
+    def search_files(base_path: str, keyword: str, file_extensions: list[str]) -> list[str]:
+        """
+        Search for files in a directory with a keyword and specific file extensions.
+
+        Parameters:
+        - base_path (str): The directory to search in.
+        - keyword (str): The keyword to search for in the file names.
+        - file_extensions (list[str]): A list of file extensions to search for.
+
+        Returns:
+        - list[str]: A list of file paths that match the search criteria.
+        """
+        logger.info(f'Search for files in {base_path} with keyword: {keyword} and file extensions: {file_extensions}')
+        files = []
+        for root, dirs, filenames in os.walk(base_path):
+            for filename in filenames:
+                if keyword in filename and filename.split('.')[-1] in file_extensions:
+                    files.append(os.path.join(root, filename))
+        return files

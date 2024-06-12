@@ -1,4 +1,4 @@
-from batteryabn import logger
+from batteryabn import logger, Constants as Const
 from batteryabn.models import TestRecord, Cell, Project
 from batteryabn.utils import Parser, Formatter, Utils
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
@@ -82,6 +82,32 @@ class TestRecordService:
             logger.error(f'Failed to save test record: {test_name}. Error: {e}')
             raise e
 
+    def create_and_save_trs(self, path: str, key_word: str, parser: Parser, formatter: Formatter, 
+                            file_extensions: list[str] = Const.FILE_TYPE_2_TEST_TYPE.keys(), reset: bool = False):
+        """
+        Create and save TestRecords from a list of files.
+
+        Parameters
+        ----------
+        paths : str
+            Root directory to search for files
+        key_word : str
+            Keyword to search for in file names
+        parser : Parser
+            Parser object to parse test data
+        formatter : Formatter
+            Formatter object to format test data
+        file_extensions : list[str], optional
+            List of file extensions to search for, by default ['.xlsx', '.csv', '.mpr']
+        reset : bool, optional
+            If True, the test record will be created even if it already exists, by default False        
+        """
+
+        files = Utils.search_files(path, key_word, file_extensions)
+        for file in files:
+            self.create_and_save_tr(file, parser, formatter, reset)
+
+        
 
     def find_test_record_by_name(self, test_name: str):
         """
