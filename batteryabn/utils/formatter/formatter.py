@@ -100,7 +100,7 @@ class Formatter:
             abs(current_reset), 
             (time_reset - time_reset[0]).dt.total_seconds(),
         ) / 3600
-        aht_calculated = np.append(aht_calculated, aht_calculated[-1])
+        aht_calculated = np.append(aht_calculated, aht_calculated[-1] if len(aht_calculated) > 0 else 0)
         df[Const.AHT] = aht_calculated
 
         if test_type == Const.BIOLOGIC:
