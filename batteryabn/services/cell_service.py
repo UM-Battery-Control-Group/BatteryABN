@@ -86,10 +86,32 @@ class CellService:
             self.cell_repository.rollback()
             logger.error(f'Failed to save processed data for cell: {cell_name}. Error: {e}')
             raise e
+        
+    def load_cell_images(self, cell_name: str):
+        """
+        Load cell images from the database.
+
+        Parameters
+        ----------
+        cell_name : str
+            The unique name of the cell.
+
+        Returns
+        -------
+        tuple
+            The images for the cell
+        """
+        cell = self.find_cell_by_name(cell_name)
+
+        if not cell:
+            logger.error(f'Cell not found: {cell_name}')
+            return
+        
+        return cell.load_image_cell(), cell.load_image_ccm(), cell.load_image_ccm_aht()
 
     def get_combined_cell_data(self, cell_name: str, processor: Processor):
         """
-        Get combined cell data for a cell.
+        Get combined cell cycler and vdf data for a cell.
 
         Parameters
         ----------
