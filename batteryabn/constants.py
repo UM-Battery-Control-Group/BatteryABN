@@ -2,6 +2,10 @@ from datetime import timedelta, timezone
 
 
 class Constants:
+
+#------------------------------------Paths:------------------------------------------#
+    #TODO: The root directory should be set in the configuration file in the future
+    ROOT_DIRECTORY = '/home/me-bcl/Lab_share_Volt/'
         
 #------------------------------------Strings:------------------------------------------#
     ARBIN = 'Arbin'

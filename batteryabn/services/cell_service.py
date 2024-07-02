@@ -1,7 +1,7 @@
 import pickle
 from batteryabn import logger, Constants as Const
 from batteryabn.models import Cell, Project
-from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
+from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository, FileSystemRepository
 from batteryabn.utils import Processor, Viewer, Utils
 
 
@@ -9,10 +9,12 @@ class CellService:
     """
     The CellService class provides an interface for creating and querying Cell objects.
     """
-    def __init__(self, cell_repository: CellRepository, test_record_repository: TestRecordRepository, project_repository: ProjectRepository):
+    def __init__(self, cell_repository: CellRepository, test_record_repository: TestRecordRepository, 
+                 project_repository: ProjectRepository, filesystem_repository: FileSystemRepository):
         self.cell_repository = cell_repository
         self.test_record_repository = test_record_repository
         self.project_repository = project_repository
+        self.filesystem_repository = filesystem_repository
 
 
     def create_cell(self, cell_name: str):
@@ -58,6 +60,7 @@ class CellService:
             Processor object with processed cell data
         """
         cell = self.find_cell_by_name(cell_name)
+        project = cell.project
 
         if not cell:
             logger.error(f'Cell not found: {cell_name}')
@@ -86,6 +89,12 @@ class CellService:
             self.cell_repository.rollback()
             logger.error(f'Failed to save processed data for cell: {cell_name}. Error: {e}')
             raise e
+        
+        # Save data to local file
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
+
         
     def load_cell_images(self, cell_name: str):
         """
