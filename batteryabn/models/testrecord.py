@@ -72,7 +72,7 @@ class TestRecord(Base):
         """
         # TODO: CYCLE_TYPES should be in the configuration file? 
         for type in Constants.CYCLE_TYPES:
-            if type.lower() in self.test_name:
+            if type.upper() in self.test_name:
                 return type
         # Default  
         return Constants.CYCLE_TYPES[0]

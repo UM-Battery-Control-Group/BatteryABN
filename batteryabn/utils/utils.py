@@ -8,6 +8,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import io
+import shutil
 from PIL import Image
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -390,6 +391,22 @@ class Utils:
         return t_array
     
     @staticmethod
+    def datetime_series_to_unix_timestamps(dt_series: pd.Series) -> np.ndarray:
+        """
+        Convert a pandas Series of datetime objects to an array of Unix timestamps.
+
+        Parameters:
+        - dt_series (pd.Series): A pandas Series containing datetime objects.
+
+        Returns:
+        - pd.Series: A pandas Series containing Unix timestamps.
+        """
+        # Convert the datetime objects to Unix timestamps
+        unix_timestamps = dt_series.apply(lambda x: Utils.datetime_to_unix_timestamp(x) * 1000)
+        return unix_timestamps.to_numpy(dtype=np.float64)
+    
+
+    @staticmethod
     def time_string_to_seconds(time_string: str) -> int:
         """
         Converts a time string in the format HH:MM:SS.mmm to seconds.
@@ -434,6 +451,52 @@ class Utils:
         files = []
         for root, dirs, filenames in os.walk(base_path):
             for filename in filenames:
-                if keyword in filename and filename.split('.')[-1] in file_extensions:
+                if not filename.startswith('~$') and keyword in filename and filename.split('.')[-1] in file_extensions:
                     files.append(os.path.join(root, filename))
         return files
+    
+    @staticmethod
+    def backup_file(file_path):
+        """
+        Create a backup of a file by copying it and adding '(copy)' to the name.
+
+        Parameters:
+        - file_path (str): The path to the file to backup.
+
+        Returns:
+        - str: The path to the backup   
+        """
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(f"No such file: '{file_path}'")
+        
+        file_dir, file_name = os.path.split(file_path)
+        name, ext = os.path.splitext(file_name)
+        backup_name = f"{name}(copy){ext}"
+        backup_path = os.path.join(file_dir, backup_name)
+        
+        shutil.copyfile(file_path, backup_path)
+        return backup_path
+    
+    def restore_file(backup_path):
+        """
+        Restore a file from a backup by removing '(copy)' from the name.
+
+        Parameters:
+        - backup_path (str): The path to the backup file.
+
+        Returns:
+        - str: The path to the restored file
+        """
+        if not os.path.isfile(backup_path):
+            raise FileNotFoundError(f"No such file: '{backup_path}'")
+        
+        file_dir, file_name = os.path.split(backup_path)
+        name, ext = os.path.splitext(file_name)
+        if name.endswith("(copy)"):
+            original_name = name[:-6]  # Remove (copy)
+            original_path = os.path.join(file_dir, f"{original_name}{ext}")
+            
+            shutil.copyfile(backup_path, original_path)
+            return original_path
+        else:
+            raise ValueError(f"File name does not end with '(copy)': '{file_name}'")

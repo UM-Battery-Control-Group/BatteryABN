@@ -96,6 +96,7 @@ class Processor:
         # Find matching cycle timestamps from cycler data
         t_vdf, exp_vdf, exp_vdf_um = (cell_data_vdf[key] for key in [Const.TIMESTAMP, Const.EXPANSION, Const.EXPANSION_UM])
         cycle_timestamps = cell_cycle_metrics[Const.TIMESTAMP][cell_cycle_metrics[Const.CYCLE_IDC]]
+        cycle_timestamps = Utils.datetime_series_to_unix_timestamps(cycle_timestamps)
         t_cycle_vdf, cycle_vdf_idxs, matched_timestamp_idxs = self.find_matching_timestamp(cycle_timestamps, t_vdf)  
 
         # Add cycle indicator, align with cycles timestamps previously defined by cycler data
@@ -132,6 +133,7 @@ class Processor:
         # Add timestamps for charge cycles
         charge_cycle_idxs = list(np.where(cell_cycle_metrics[Const.CHARGE_CYCLE_IDC])[0])
         charge_cycle_timestamps = cell_cycle_metrics[Const.TIMESTAMP][cell_cycle_metrics[Const.CHARGE_CYCLE_IDC]]
+        charge_cycle_timestamps = Utils.datetime_series_to_unix_timestamps(charge_cycle_timestamps)
         t_charge_cycle_vdf, _, matched_charge_timestamp_idx = self.find_matching_timestamp(charge_cycle_timestamps, t_vdf)
         for i, j in enumerate(matched_charge_timestamp_idx):
             cell_cycle_metrics.loc[charge_cycle_idxs[j], Const.TIME_VDF] = t_charge_cycle_vdf[i]
@@ -184,16 +186,13 @@ class Processor:
         logger.debug(f"Processing cycler expansion data for {tr.test_name}")
         df = tr.get_test_data()
         df = df[(df[Const.EXPANSION] >1e1) & (df[Const.EXPANSION] <1e7)] #keep good signals 
-
-        # TODO: These part could be moved into formatter if the calibration data does not change to improve performance
         df[Const.EXPANSION_UM] = 1000 * (30.6 - (df[Const.CALIBRATION_X2] * (df[Const.EXPANSION] / 10**6)**2 + df[Const.CALIBRATION_X1] * (df[Const.EXPANSION] / 10**6) + df[Const.CALIBRATION_C]))
-        print(f"X1: {df[Const.CALIBRATION_X1].iloc[0]}, X2: {df[Const.CALIBRATION_X2].iloc[0]}, C: {df[Const.CALIBRATION_C].iloc[0]}")
         df[Const.TEMPERATURE] = np.where((df[Const.TEMPERATURE] >= 200) & (df[Const.TEMPERATURE] <250), np.nan, df[Const.TEMPERATURE]) 
 
         return df
 
 
-    def find_matching_timestamp(self, desired_timestamps, time_series: pd.Series, t_threshold: int = 10000):
+    def find_matching_timestamp(self, desired_timestamps, time_series: pd.Series, t_threshold: int = 60):
         """
         Find the matching timestamps 
 
@@ -216,24 +215,26 @@ class Processor:
             Desired timestamp indices
         """
         if len(desired_timestamps) == 0:
-            return [], [], []
-        # Remove duplicates from time_data and create a new series with unique timestamps as index
-        unique_time_data = time_series.drop_duplicates().reset_index(drop=True)
-        unique_time_data.index = unique_time_data.values
-        desired_timestamps = (desired_timestamps - desired_timestamps.iloc[0]).dt.total_seconds()
-        # Find the indices of the closest match in unique_time_data for each desired timestamp
-        desired_timestamp_idxs = np.argwhere(unique_time_data.index.get_indexer(
-            desired_timestamps, method="nearest", tolerance=t_threshold * 1000) != -1)[:, 0]
-        matched_indices_in_unique = unique_time_data.index.get_indexer(
-            desired_timestamps, method="nearest", tolerance=t_threshold * 1000)
-        matched_indices_in_unique = matched_indices_in_unique[matched_indices_in_unique != -1]
+            return np.array([], dtype=np.float64), np.array([], dtype=int), np.array([], dtype=int)
 
-        # Get the actual matched timestamps and their indices in the original time_data
-        matched_timestamp_idxs = unique_time_data.iloc[matched_indices_in_unique].index
-        # TODO: Check if this is correct?
-        matched_idxs = unique_time_data.index.get_indexer_for(matched_timestamp_idxs)
+        # Create a series with unique timestamps as index
+        t_test = pd.Series(time_series).drop_duplicates().reset_index(drop=True)
+        t_test.index = t_test.values
 
-        return matched_timestamp_idxs, matched_idxs, desired_timestamp_idxs
+        # Find the indices of the closest match in t_test for each desired timestamp
+        mapped_indices_uniq = t_test.index.get_indexer(desired_timestamps, method="nearest", tolerance=t_threshold * 1000)
+        matched_timestamp_indices = np.argwhere(mapped_indices_uniq != -1)[:, 0]
+        mapped_indices_uniq = mapped_indices_uniq[mapped_indices_uniq != -1]
+
+        # Get the actual matched timestamps from t_test
+        matched_timestamps = t_test.iloc[mapped_indices_uniq].index.to_numpy(dtype=np.float64)
+
+        # Create a series with the original time series to find indices of matched timestamps
+        t_test2 = pd.Series(time_series, index=time_series)
+        mapped_indices = t_test2.index.get_indexer_for(matched_timestamps)
+
+        return matched_timestamps, mapped_indices, matched_timestamp_indices
+
 
 
 #-----------------Cycler Data Processing-----------------#
@@ -364,6 +365,7 @@ class Processor:
         """
         logger.debug(f"Processing cycle data for {tr.test_name}")
         df = tr.get_test_data()
+        df = df.reset_index(drop=True)
     
         # Add previous AHT to current AHT column
         df[Const.AHT] = df[Const.AHT] + pre_aht
@@ -419,9 +421,6 @@ class Processor:
         
         Utils.set_value(df, Const.CYCLE_TYPE, cycle_idxs, protocal)
         Utils.set_value(df, Const.TEST_NAME, cycle_idxs, tr.test_name)
-        Utils.set_value(df, Const.CHARGE_CYCLE_IDC, charge_start_idxs, True)
-        Utils.set_value(df, Const.DISCHARGE_CYCLE_IDC, discharge_start_idxs, True)
-        df[Const.CYCLE_IDC] = df[Const.CHARGE_CYCLE_IDC]
 
         # Get the cycle metrics
         cycle_metrics = df.iloc[cycle_idxs].copy()
@@ -471,8 +470,9 @@ class Processor:
         t_seconds = t_timedelta.dt.total_seconds()
         ic = (i.values > 1e-5).astype(int)
         Id = (i.values < -1e-5).astype(int)
-        potential_charge_start_idxs = np.where(np.diff(ic) > 0.5)[0]
-        potential_discharge_start_idxs = np.where(np.diff(Id) > 0.5)[0]
+        #TODO: FIX THIS!
+        potential_charge_start_idxs = np.where(np.diff(ic) > 0.05)[0]
+        potential_discharge_start_idxs = np.where(np.diff(Id) > 0.05)[0]
         dt = np.diff(t_seconds)
 
         # Cumah = Ah_Charge - Ah_Discharge
@@ -603,10 +603,18 @@ class Processor:
         tuple of np.ndarray
             The charge and discharge capacities.
         """
-        cycle_idxs = sorted(charge_idxs + discharge_idxs + [len(time_series) - 1])
+        cycle_idxs = charge_idxs + discharge_idxs 
         
         charge_capacities = []
         discharge_capacities = []
+
+        if len(cycle_idxs) == 0:
+            logger.warning("No cycles detected")
+            return np.array(charge_capacities), np.array(discharge_capacities)
+        
+        if max(cycle_idxs) < len(time_series):
+            cycle_idxs.append(len(time_series) - 1)
+        cycle_idxs = sorted(cycle_idxs)
 
         for i in range(len(cycle_idxs) - 1):
             capacity = aht[cycle_idxs[i + 1]] - aht[cycle_idxs[i]]
@@ -728,7 +736,7 @@ class Processor:
             if test_name in rpt_filename_to_idxs:
                 rpt_filename_to_idxs[test_name].append(idx)
 
-        cycle_summary_cols = [c for c in self.cell_cycle_metrics.columns if '[' in c] + [Const.TEST_NAME, Const.PROTOCOL]
+        cycle_summary_cols = [c for c in self.cell_cycle_metrics.columns if '(' in c] + [Const.TEST_NAME, Const.PROTOCOL]
 
         i_c20 = project.get_i_c20() if project else Const.I_C20
 
@@ -739,8 +747,8 @@ class Processor:
             pre_rpt_subcycle = pd.DataFrame()
 
             for i in rpt_idxs:
-                t_start = self.cell_cycle_metrics.at[i, Const.TIMESTAMP] - 30
-                t_end = self.cell_data[Const.TIMESTAMP].iloc[-1] + 30 if i + 1 >= len(self.cell_cycle_metrics) else self.cell_cycle_metrics.at[i + 1, Const.TIMESTAMP] + 30
+                t_start = self.cell_cycle_metrics.at[i, Const.TIMESTAMP] - pd.Timedelta(milliseconds=30)
+                t_end = self.cell_data[Const.TIMESTAMP].iloc[-1] + pd.Timedelta(milliseconds=30) if i + 1 >= len(self.cell_cycle_metrics) else self.cell_cycle_metrics.at[i + 1, Const.TIMESTAMP] + pd.Timedelta(milliseconds=30)
                 
                 rpt_subcycle = self.cell_cycle_metrics.loc[i, cycle_summary_cols].to_dict()
                 rpt_subcycle[Const.RPT] = rpt_file
@@ -757,7 +765,7 @@ class Processor:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = pd.DataFrame()
                     
-                t_vdf = self.cell_data_vdf[Const.TIMESTAMP]
+                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP])
                 if not t_vdf.empty:
                     rpt_subcycle[Const.DATA_VDF] = self.cell_data_vdf.loc[(t_vdf > t_start) & (t_vdf < t_end)]
 
@@ -789,10 +797,10 @@ class Processor:
         """
         if rpt_subcycle[Const.PROTOCOL] == Const.HPPC:
             # Extract necessary data for get_Rs_SOC function
-            time_ms = rpt_subcycle[Const.DATA][0][Const.TIMESTAMP] / 1000.0
-            current = rpt_subcycle[Const.DATA][0][Const.CURRENT]
-            voltage = rpt_subcycle[Const.DATA][0][Const.VOLTAGE]
-            ah_throughput = rpt_subcycle[Const.DATA][0][Const.AHT]
+            time_ms = rpt_subcycle[Const.DATA][Const.TIMESTAMP] 
+            current = rpt_subcycle[Const.DATA][Const.CURRENT]
+            voltage = rpt_subcycle[Const.DATA][Const.VOLTAGE]
+            ah_throughput = rpt_subcycle[Const.DATA][Const.AHT]
             
             hppc_data = self.get_rs_soc(time_ms, current, voltage, ah_throughput)
 
@@ -804,6 +812,14 @@ class Processor:
                 # Update the cell_cycle_metrics with the new data
                 if col in hppc_data:
                     self.cell_cycle_metrics.at[i, col] = hppc_data[col].tolist()
+                            
+            # Update the cell_cycle_metrics with the new data
+            logger.warn(f"hppc_data: {hppc_data}")
+            self.cell_cycle_metrics.at[i, Const.PULSE_Q] = hppc_data[Const.PULSE_Q].tolist() if not hppc_data[Const.PULSE_Q].empty else np.nan
+            self.cell_cycle_metrics.at[i, Const.PULSE_DURATION] = hppc_data[Const.PULSE_DURATION].tolist() if not hppc_data[Const.PULSE_DURATION].empty  else np.nan
+            self.cell_cycle_metrics.at[i, Const.PULSE_CURRENT] = hppc_data[Const.PULSE_CURRENT].tolist() if not hppc_data[Const.PULSE_CURRENT].empty  else np.nan
+            self.cell_cycle_metrics.at[i, Const.R_S] = hppc_data[Const.R_S].tolist() if not hppc_data[Const.R_S].empty  else np.nan
+            self.cell_cycle_metrics.at[i, Const.R_L] = hppc_data[Const.R_L].tolist() if not hppc_data[Const.R_L].empty else np.nan
 
 
     def update_cycle_metrics_esoh(self, rpt_subcycle: dict, pre_rpt_subcycle: dict, i: int, i_slow: float):
@@ -1055,7 +1071,7 @@ class Processor:
 
             records.append({
                 Const.PULSE_CURRENT: round(np.mean(i2), 3),
-                Const.PULSE_DURATION: round(np.mean(t3) - np.mean(t1), 3),
+                Const.PULSE_DURATION: round((np.mean(t3) - np.mean(t1)).total_seconds(), 3),
                 Const.PULSE_Q: q_val,
                 Const.R_S: round(r_p1, 4),
                 Const.R_L: round(r_p2, 4)
@@ -1214,9 +1230,6 @@ class Processor:
         vdf_dfs.reset_index(inplace=True)
         cycler_dfs.dropna(subset=[Const.TIMESTAMP], inplace=True)
         vdf_dfs.dropna(subset=[Const.TIMESTAMP], inplace=True)
-
-        print(f"VDF start time: {vdf_dfs[Const.TIMESTAMP].iloc[0]}, end time: {vdf_dfs[Const.TIMESTAMP].iloc[-1]}")
-        print(f"Cycler start time: {cycler_dfs[Const.TIMESTAMP].iloc[0]}, end time: {cycler_dfs[Const.TIMESTAMP].iloc[-1]}")
 
         merged_df = pd.merge_asof(cycler_dfs, vdf_dfs, on=Const.TIMESTAMP, direction='nearest', tolerance=pd.Timedelta('1000s'))
         merged_df.dropna(inplace=True)

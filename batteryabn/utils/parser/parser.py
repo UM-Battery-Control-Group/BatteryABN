@@ -1,10 +1,12 @@
 import os
 import re
 import csv
+import cellpy
 import pandas as pd
 from galvani import BioLogic
 
 from batteryabn import logger, Constants as Const
+from batteryabn.utils import Utils
 
 class Parser:
     def __init__(self):
@@ -63,8 +65,13 @@ class Parser:
         file_path : str
             Path to Arbin test data file
         """
-        # TODO: Implement Arbin test data parsing
-        pass
+        # Create a backup of the file before reading it, the modified cellpy read function will change the file
+        backup_file_path = Utils.backup_file(file_path)
+        arbin_raw_df, arbin_summary_df, arbin_steps_df = self.__read_cellpy(file_path)
+
+        # Store raw test data
+        self.raw_test_data = arbin_raw_df
+        Utils.restore_file(backup_file_path)
 
     def parse_biologic(self, file_path: str) -> None:
         """
@@ -99,6 +106,9 @@ class Parser:
         # Add the timestamp for the neware data
         start_time = pd.to_datetime(neware_raw_df['Date'][0])
         total_time = pd.to_timedelta(neware_raw_df['Total Time'])
+        # Adjust Total Time
+        first_total_time = total_time[0]
+        total_time = total_time - first_total_time
         neware_raw_df[Const.TIMESTAMP] = start_time + total_time
         neware_raw_df.drop(columns=['t1(℃)'], inplace=True)
         
@@ -179,6 +189,7 @@ class Parser:
         c_index = header.index('C')
         start_date_index = header.index('Start Date (Aging)')
         removal_date_index = header.index('Removal Date')
+        protocol_index = header.index('Test Protocol')
 
         # TODO: Default values should be fetched from the database in the future
         default_X1, default_X2, default_C = 1.6473, -27.134, 138.74
@@ -198,7 +209,9 @@ class Parser:
             if cell_name not in calibration_parameters:
                 calibration_parameters[cell_name] = []
 
-            calibration_parameters[cell_name].append((start_date, removal_date, x1, x2, c))
+            protocol = row[protocol_index] if row[protocol_index] else 'DEFAULT'
+            calibration_parameters[cell_name].append({protocol: (x1, x2, c)})
+            # calibration_parameters[cell_name].append((start_date, removal_date, x1, x2, c))
         self.calibration_parameters = calibration_parameters
         
     def __get_test_name(self, file_path: str) -> str:
@@ -271,8 +284,7 @@ class Parser:
             The raw data
         """
         try:
-            # Read the xlsx file
-            xlsx = pd.ExcelFile(file_path)
+            xlsx = pd.ExcelFile(file_path, engine='openpyxl')
             # Get the 'record' sheet
             raw_data = pd.read_excel(xlsx, sheet_name=sheet)
             logger.info(f"Loaded xlsx file from {file_path} successfully")
@@ -366,6 +378,38 @@ class Parser:
         except Exception:
             raise ValueError(f"Failed to load mpr file from {file_path}")
         
+    def __read_cellpy(self, file_path: str):
+        """
+        Read the cellpy file and return the iterator of rows
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the cellpy file
+
+        Returns
+        -------
+        raw_data : pandas.DataFrame
+            The raw data
+        summary_data : pandas.DataFrame
+            The summary data
+        steps_data : pandas.DataFrame
+            The steps data
+        """
+        try:
+            # Use cellpy to read the file and convert it to a list of rows
+            cell = cellpy.cellreader.get(file_path, instrument="arbin_res")
+            data = cell.data
+            raw_data = data.raw
+            summary_data = data.summary
+            steps_data = data.steps
+            logger.info(f"Loaded cellpy file from {file_path} successfully")
+
+            return raw_data, summary_data, steps_data
+            
+        except Exception as e:
+            logger.error(f"Failed to load cellpy file from {file_path}: {e}")
+            return None, None, None
 
     def clear(self) -> None:
         """

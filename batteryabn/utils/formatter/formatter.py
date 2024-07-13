@@ -68,7 +68,7 @@ class Formatter:
         """
         logger.info('Format battery test data')
 
-        if data.empty:
+        if data is None or data.empty:
             return
         
         df = data.copy()
@@ -158,35 +158,38 @@ class Formatter:
         calibration_parameters : dict
             Calibration parameters
         """
-        formatted_parameters = {}
+        self.calibration_parameters = calibration_parameters
 
-        for cell_name, periods in calibration_parameters.items():
-            # Sort the periods by start date
-            periods.sort(key=lambda x: datetime.strptime(x[0], "%m/%d/%Y"))
+        # Not use time dict to store the calibration parameters at the moment
+        # formatted_parameters = {}
 
-            time_dict = {}
+        # for cell_name, periods in calibration_parameters.items():
+        #     # Sort the periods by start date
+        #     periods.sort(key=lambda x: datetime.strptime(x[0], "%m/%d/%Y"))
 
-            for start, end, x1, x2, c in periods:
-                #TODO: Use timestamp or datetime object instead of string
-                start_time = datetime.strptime(start, "%m/%d/%Y")
-                start_time = Utils.datetime_to_unix_timestamp(start_time)
-                end_time = datetime.strptime(end, "%m/%d/%Y")
-                end_time = Utils.datetime_to_unix_timestamp(end_time)
+        #     time_dict = {}
 
-                # Get the existing overlapping keys
-                overlapping_keys = [k for k in time_dict.keys() if k <= start_time]
+        #     for start, end, x1, x2, c in periods:
+        #         #TODO: Use timestamp or datetime object instead of string
+        #         start_time = datetime.strptime(start, "%m/%d/%Y")
+        #         start_time = Utils.datetime_to_unix_timestamp(start_time)
+        #         end_time = datetime.strptime(end, "%m/%d/%Y")
+        #         end_time = Utils.datetime_to_unix_timestamp(end_time)
 
-                # Remove the overlapping keys
-                for key in overlapping_keys:
-                    if key < end_time:
-                        del time_dict[key]
-                # Add the new key
-                time_dict[start_time] = (x1, x2, c)
-                time_dict[end_time] = (Const.X1, Const.X2, Const.C)
+        #         # Get the existing overlapping keys
+        #         overlapping_keys = [k for k in time_dict.keys() if k <= start_time]
 
-            formatted_parameters[cell_name] = time_dict
+        #         # Remove the overlapping keys
+        #         for key in overlapping_keys:
+        #             if key < end_time:
+        #                 del time_dict[key]
+        #         # Add the new key
+        #         time_dict[start_time] = (x1, x2, c)
+        #         time_dict[end_time] = (Const.X1, Const.X2, Const.C)
 
-        self.calibration_parameters = formatted_parameters
+        #     formatted_parameters[cell_name] = time_dict
+
+        # self.calibration_parameters = formatted_parameters
 
     def add_calibration_parameters(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -212,11 +215,15 @@ class Formatter:
         if not calibration_parameters:
             return df
 
-        for time, parameters in calibration_parameters.items():
-            x1, x2, c = parameters
-            df.loc[(df[Const.TIMESTAMP] >= time), Const.CALIBRATION_X1] = x1
-            df.loc[(df[Const.TIMESTAMP] >= time), Const.CALIBRATION_X2] = x2
-            df.loc[(df[Const.TIMESTAMP] >= time), Const.CALIBRATION_C] = c
+        for calibration_parameter in calibration_parameters:
+            for protocol, parameters in calibration_parameter.items():
+                x1, x2, c = parameters
+                #TODO: Check this hard coded condition
+                if (self.metadata.get('Test Type') == '_F' and protocol == 'Formation') or (self.metadata.get('Test Type') != '_F' and protocol != 'Formation'):
+                    df[Const.CALIBRATION_X1] = x1
+                    df[Const.CALIBRATION_X2] = x2
+                    df[Const.CALIBRATION_C] = c
+
         return df
 
     def clear(self) -> None:
