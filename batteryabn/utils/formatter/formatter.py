@@ -22,6 +22,7 @@ class Formatter:
         self.test_data = pd.DataFrame(dtype=object)
         self.metadata = {}
         self.cell_name = None # Cell name for the test data
+        self.start_time = None # Start timestamp for the test data
         self.last_update_time = None # Last update timestamp for the test data
         self.calibration_parameters = {}
 
@@ -123,10 +124,12 @@ class Formatter:
                 raise ValueError(f"Inconsistent data lengths in the dataframe")
 
         if not df.empty and Const.TIMESTAMP in df.columns:
-            last_timestamp_value = df[Const.TIMESTAMP].iloc[-1]
+            start_timestamp_value, last_timestamp_value = df[Const.TIMESTAMP].iloc[0], df[Const.TIMESTAMP].iloc[-1]
             if isinstance(last_timestamp_value, pd.Timestamp):
+                self.start_time = Utils.timestamp_to_int(start_timestamp_value)
                 self.last_update_time = Utils.timestamp_to_int(last_timestamp_value)
             else:
+                self.start_time = int(start_timestamp_value)
                 self.last_update_time = int(last_timestamp_value)
 
         self.test_data = df

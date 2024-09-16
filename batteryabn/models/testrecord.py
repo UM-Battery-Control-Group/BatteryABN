@@ -35,6 +35,7 @@ class TestRecord(Base):
     # Store test data as pickled object
     test_data = Column(LargeBinary) 
     test_metadata = Column(LargeBinary)
+    start_time = Column(BIGINT, nullable=True) # Unix timestamp
     last_update_time = Column(BIGINT) # Unix timestamp
     cell = relationship("Cell", back_populates="test_records")
 

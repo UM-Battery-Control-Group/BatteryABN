@@ -107,6 +107,22 @@ class TestRecordService:
         for file in files:
             self.create_and_save_tr(file, parser, formatter, reset)
 
+    def delete_test_record(self, test_name: str):
+        """
+        This method deletes a TestRecord from the database.
+
+        Parameters
+        ----------
+        test_name : str
+            The name of the test record to delete
+        """
+        test_record = self.test_record_repository.find_by_name(test_name)
+        if test_record:
+            self.test_record_repository.delete(test_record)
+            self.test_record_repository.commit()
+            logger.info(f'Deleted test record: {test_name}')
+        else:
+            logger.info(f'Test record not found: {test_name}')
         
 
     def find_test_record_by_name(self, test_name: str):

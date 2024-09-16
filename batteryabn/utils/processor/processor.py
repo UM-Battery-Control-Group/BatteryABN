@@ -19,6 +19,7 @@ class Processor:
         self.cell_data = pd.DataFrame(dtype=object)
         self.cell_cycle_metrics = pd.DataFrame(dtype=object)
         self.cell_data_vdf = pd.DataFrame(dtype=object)
+        self.cell_data_rpt = pd.DataFrame(dtype=object)
         self.update = False
 
     def set_processed_data(self, data: pd.DataFrame = None, 
@@ -185,6 +186,9 @@ class Processor:
         """
         logger.debug(f"Processing cycler expansion data for {tr.test_name}")
         df = tr.get_test_data()
+        if df.empty:
+            logger.warning(f"No data found for {tr.test_name}")
+            return df
         df = df[(df[Const.EXPANSION] >1e1) & (df[Const.EXPANSION] <1e7)] #keep good signals 
         df[Const.EXPANSION_UM] = 1000 * (30.6 - (df[Const.CALIBRATION_X2] * (df[Const.EXPANSION] / 10**6)**2 + df[Const.CALIBRATION_X1] * (df[Const.EXPANSION] / 10**6) + df[Const.CALIBRATION_C]))
         df[Const.TEMPERATURE] = np.where((df[Const.TEMPERATURE] >= 200) & (df[Const.TEMPERATURE] <250), np.nan, df[Const.TEMPERATURE]) 
@@ -328,7 +332,7 @@ class Processor:
         if len(discharge_start_idxs_0) > 1 and len(charge_start_idxs_0) > 1:
             charge_start_idx, discharge_start_idx = self.match_charge_discharge(charge_start_idxs_0, discharge_start_idxs_0)
             removed_charge_cycle_idx = list(set(charge_start_idxs_0).symmetric_difference(set(charge_start_idx)))
-            cell_data.loc[removed_charge_cycle_idx, Const.CAPACITY_CHECK_IDC] = False
+            cell_data.loc[removed_charge_cycle_idx, Const.CHARGE_CYCLE_IDC] = False
             removed_discharge_cycle_idx = list(set(discharge_start_idxs_0).symmetric_difference(set(discharge_start_idx)))
             cell_data.loc[removed_discharge_cycle_idx, Const.DISCHARGE_CYCLE_IDC] = False
             removed_capacity_check_idx = list(set(capacity_check_idxs_0).symmetric_difference(set(charge_start_idx)))
@@ -753,9 +757,10 @@ class Processor:
                 rpt_subcycle = self.cell_cycle_metrics.loc[i, cycle_summary_cols].to_dict()
                 rpt_subcycle[Const.RPT] = rpt_file
                 t = self.cell_data[Const.TIMESTAMP]
-                rpt_subcycle[Const.DATA] = self.cell_data.loc[(t > t_start) & (t < t_end), 
-                                        [Const.TIMESTAMP, Const.CURRENT, Const.VOLTAGE, Const.AHT, Const.TEMPERATURE, Const.STEP_IDX]]
-
+                rpt_subcycle[Const.DATA] = self.cell_data.loc[
+                        (t > t_start) & (t < t_end), 
+                        [Const.TIMESTAMP, Const.CURRENT, Const.VOLTAGE, Const.AHT, Const.TEMPERATURE, Const.STEP_IDX]
+                ].reset_index(drop=True) 
                 self.update_cycle_metrics_hppc(rpt_subcycle, i)
 
                 # Process ESOH data for the charge and discharge cycles
@@ -771,8 +776,6 @@ class Processor:
 
                 cell_rpt_data_list.append(pd.DataFrame([rpt_subcycle]))
 
-        return 
-    
         cell_rpt_data = pd.concat(cell_rpt_data_list, ignore_index=True)
         cell_rpt_data.reset_index(drop=True, inplace=True)
 
@@ -781,8 +784,14 @@ class Processor:
         cell_rpt_data = cell_rpt_data[cols]
 
         # Sort the DataFrame based on the first timestamp in 'Data' column
-        cell_rpt_data = cell_rpt_data.sort_values(by=Const.DATA, key=lambda x: x[Const.TIMESTAMP].iloc[0] if not x.empty else pd.NaT)
-        
+        cell_rpt_data['first_timestamp'] = cell_rpt_data[Const.DATA].apply(
+            lambda data_list: data_list[Const.TIMESTAMP].iloc[0] if len(data_list) > 0 and not data_list.empty else pd.NaT
+        )        
+        cell_rpt_data = cell_rpt_data.sort_values(by='first_timestamp')
+        cell_rpt_data.drop(columns=['first_timestamp'], inplace=True)
+        cell_rpt_data.reset_index(drop=True, inplace=True)
+
+        self.cell_data_rpt = cell_rpt_data
 
     def update_cycle_metrics_hppc(self, rpt_subcycle: dict, i: int):
         """
@@ -814,7 +823,6 @@ class Processor:
                     self.cell_cycle_metrics.at[i, col] = hppc_data[col].tolist()
                             
             # Update the cell_cycle_metrics with the new data
-            logger.warn(f"hppc_data: {hppc_data}")
             self.cell_cycle_metrics.at[i, Const.PULSE_Q] = hppc_data[Const.PULSE_Q].tolist() if not hppc_data[Const.PULSE_Q].empty else np.nan
             self.cell_cycle_metrics.at[i, Const.PULSE_DURATION] = hppc_data[Const.PULSE_DURATION].tolist() if not hppc_data[Const.PULSE_DURATION].empty  else np.nan
             self.cell_cycle_metrics.at[i, Const.PULSE_CURRENT] = hppc_data[Const.PULSE_CURRENT].tolist() if not hppc_data[Const.PULSE_CURRENT].empty  else np.nan
@@ -1077,7 +1085,7 @@ class Processor:
                 Const.R_L: round(r_p2, 4)
             })
 
-        return pd.DataFrame(records)
+        return pd.DataFrame(records) if records else pd.DataFrame(columns=[Const.PULSE_CURRENT, Const.PULSE_DURATION, Const.PULSE_Q, Const.R_S, Const.R_L])
 
     def fitfunc(self, x: np.array, q_data: np.array, v_data: np.array, dvdq_data: np.array, dvdq_bool: bool = True):
         """

@@ -84,7 +84,6 @@ class Parser:
         """
  
         biologic_raw_df, start_time = self.__load_mpr(file_path)
-        
         # Add the timestamp column
         total_time = pd.to_timedelta(biologic_raw_df['time/s'])
         biologic_raw_df[Const.TIMESTAMP] = start_time + total_time
@@ -369,7 +368,14 @@ class Parser:
             # Read the mpr file
             mpr_file = BioLogic.MPRfile(file_path)
             # Get the start time
-            start_time = mpr_file.timestamp
+            # If the mpr_file.timestamp is not available, use the startdate
+            if hasattr(mpr_file, 'timestamp') and mpr_file.timestamp:
+                start_time = mpr_file.timestamp
+            else:
+                start_date = mpr_file.startdate
+                # Start date is datetime.date type, convert it to datetime.datetime
+                start_time = pd.to_datetime(start_date)
+
             df = pd.DataFrame(mpr_file.data)
             logger.info(f"Loaded mpr file from {file_path} successfully")
 

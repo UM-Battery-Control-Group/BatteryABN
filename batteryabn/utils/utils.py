@@ -477,6 +477,7 @@ class Utils:
         shutil.copyfile(file_path, backup_path)
         return backup_path
     
+    @staticmethod
     def restore_file(backup_path):
         """
         Restore a file from a backup by removing '(copy)' from the name.
@@ -497,6 +498,37 @@ class Utils:
             original_path = os.path.join(file_dir, f"{original_name}{ext}")
             
             shutil.copyfile(backup_path, original_path)
+            os.remove(backup_path)
             return original_path
         else:
             raise ValueError(f"File name does not end with '(copy)': '{file_name}'")
+
+    @staticmethod    
+    def delete_backups(directory, file_extension='.res'):
+        """
+        Traverse the specified directory and delete backup files that end with '(copy)'
+        if the corresponding original files exist. Optionally, filter by file extension.
+
+        Parameters:
+        - directory (str): The path to the directory to traverse.
+        - file_extension (str, optional): The file extension to filter by (e.g., '.txt').
+
+        Returns:
+        - int: The number of deleted backup files.
+        """
+        deleted_count = 0
+
+        for root, _, files in os.walk(directory):
+            for file_name in files:
+                name, ext = os.path.splitext(file_name)
+                if name.endswith("(copy)") and ext == file_extension:
+                    backup_path = os.path.join(root, file_name)
+                    original_name = name[:-6]  # Remove (copy)
+                    original_path = os.path.join(root, f"{original_name}{ext}")
+
+                    if os.path.isfile(original_path):
+                        os.remove(backup_path)
+                        deleted_count += 1
+                        print(f"Deleted backup file: {backup_path}")
+
+        return deleted_count

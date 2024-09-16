@@ -5,7 +5,7 @@ class Constants:
 
 #------------------------------------Paths:------------------------------------------#
     #TODO: The root directory should be set in the configuration file in the future
-    ROOT_DIRECTORY = '/home/me-bcl/Lab_share_Volt/'
+    ROOT_DIRECTORY = '/home/me-bcl/Lab_share_Volt/Processed'
         
 #------------------------------------Strings:------------------------------------------#
     ARBIN = 'Arbin'
