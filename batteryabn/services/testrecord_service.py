@@ -156,3 +156,36 @@ class TestRecordService:
             A list of TestRecord objects associated with the specified cell
         """
         return self.test_record_repository.find_by_cell_name(cell_name)
+
+
+    def delete_test_record(self, test_name: str):
+        """
+        This method deletes a TestRecord from the database.
+
+        Parameters
+        ----------
+        test_name : str
+            The name of the test record to delete
+        """
+        test_record = self.test_record_repository.find_by_name(test_name)
+        if test_record:
+            self.test_record_repository.delete(test_record)
+            self.test_record_repository.commit()
+            logger.info(f'Deleted test record: {test_name}')
+        else:
+            logger.info(f'Test record not found: {test_name}')
+
+    def delete_test_records_by_cell_name(self, cell_name: str):
+        """
+        This method deletes all TestRecords associated with a Cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The name of the cell
+        """
+        test_records = self.test_record_repository.find_by_cell_name(cell_name)
+        for test_record in test_records:
+            self.test_record_repository.delete(test_record)
+        self.test_record_repository.commit()
+        logger.info(f'Deleted test records associated with cell: {cell_name}')

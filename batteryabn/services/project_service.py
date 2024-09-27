@@ -58,3 +58,13 @@ class ProjectService:
         """
         return self.project_repository.find_by_name(project_name)
     
+    def get_all_projects(self):
+        """
+        This method returns all projects.
+
+        Returns
+        -------
+        List[Project]
+            A list of all projects
+        """
+        return self.project_repository.get_all_projects()

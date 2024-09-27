@@ -61,3 +61,18 @@ class Cell(Base):
         Load the cell cycle metrics AHT image from the database.
         """
         return Utils.binary_to_image(self.image_ccm_aht)
+    
+    def to_dict(self):
+        """
+        Convert the Cell object to a dictionary.
+        """
+        return {
+            'cell_name': self.cell_name,
+            'project_name': self.project_name,
+            # 'cell_data': self.load_cell_data(),
+            # 'cell_cycle_metrics': self.load_cell_cycle_metrics(),
+            # 'cell_data_vdf': self.load_cell_data_vdf(),
+            # 'image_cell': self.load_image_cell(),
+            # 'image_ccm': self.load_image_ccm(),
+            # 'image_ccm_aht': self.load_image_ccm_aht()
+        }

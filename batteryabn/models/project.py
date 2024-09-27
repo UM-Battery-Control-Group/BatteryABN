@@ -29,3 +29,13 @@ class Project(Base):
         Get the total I_C20 for the project.
         """
         return self.i_c20
+
+    def to_dict(self):
+        """
+        Convert the Project object to a dictionary.
+        """
+        return {
+            'project_name': self.project_name,
+            'qmax': self.get_qmax(),
+            'i_c20': self.get_i_c20()
+        }

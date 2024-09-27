@@ -99,3 +99,22 @@ class TestRecord(Base):
             True if the test is a formation test, False otherwise
         """
         return '_f_' in self.test_name.lower()
+    
+    def to_dict(self) -> dict:
+        """
+        Convert the TestRecord object to a dictionary.
+
+        Returns
+        -------
+        dict
+            Test record dictionary
+        """
+        return {
+            'test_name': self.test_name,
+            'test_type': self.test_type,
+            'cell_name': self.cell_name,
+            'test_data': self.get_test_data(),
+            'test_metadata': self.get_test_metadata(),
+            'start_time': self.start_time,
+            'last_update_time': self.last_update_time
+        }

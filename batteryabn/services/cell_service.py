@@ -70,32 +70,94 @@ class CellService:
         # Process cell data
         processor.process(cycler_trs, vdf_trs, cell.project)
         # Genrate images for processed data
-        img_cell, img_ccm, img_ccm_aht = viewer.plot(processor, cell.cell_name)
+        img_cell, img_ccm, img_ccm_aht = viewer.plot(processor.cell_data, processor.cell_cycle_metrics, processor.cell_data_vdf, cell_name)
 
-        # Update cell data
-        cell.cell_data = Utils.gzip_pikle_dump(processor.cell_data)
-        cell.cell_cycle_metrics = Utils.gzip_pikle_dump(processor.cell_cycle_metrics)
-        cell.cell_data_vdf = Utils.gzip_pikle_dump(processor.cell_data_vdf)
+        # # Update cell data
+        # cell.cell_data = Utils.gzip_pikle_dump(processor.cell_data)
+        # cell.cell_cycle_metrics = Utils.gzip_pikle_dump(processor.cell_cycle_metrics)
+        # cell.cell_data_vdf = Utils.gzip_pikle_dump(processor.cell_data_vdf)
 
         cell.image_cell = Utils.image_to_binary(img_cell)
         cell.image_ccm = Utils.image_to_binary(img_ccm)
         cell.image_ccm_aht = Utils.image_to_binary(img_ccm_aht)
 
         # Save cell data
-        try:
-            self.cell_repository.commit()
-            logger.info(f'Processed and saved data for cell: {cell_name}')
-        except Exception as e:
-            self.cell_repository.rollback()
-            logger.error(f'Failed to save processed data for cell: {cell_name}. Error: {e}')
-            raise e
+        # try:
+        #     self.cell_repository.commit()
+        #     logger.info(f'Processed and saved data for cell: {cell_name}')
+        # except Exception as e:
+        #     self.cell_repository.rollback()
+        #     logger.error(f'Failed to save processed data for cell: {cell_name}. Error: {e}')
+        #     raise e
         
+        print(f'start saving data to local file')
         # Save data to local file
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
+        self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_rpt', processor.cell_data_rpt)
+        self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'cell', img_cell)
+        self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm', img_ccm)
+        self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht)    
+        print(f'finished saving data to local file')
 
+    def generate_cell_images_by_processed_data(self, cell_name: str, viewer: Viewer):
+        """
+        Generate images for a cell based on processed data.
+        Find the processed data for the cell and generate images based on it.
+
+        Parameters
+        ----------
+        cell_name : str
+            The unique name of the cell.
+        viewer : Viewer
+            Viewer object with plotting functions
+
+        Returns
+        -------
+        tuple
+            The images for the cell
+        """
+        cell_data, cell_cycle_metrics, cell_data_vdf = self.get_processed_data(cell_name)
+        if not cell_data or not cell_cycle_metrics or not cell_data_vdf:
+            logger.error(f'Processed data not found for cell: {cell_name}')
+            return
         
+        img_cell, img_ccm, img_ccm_aht = viewer.plot(cell_data, cell_cycle_metrics, cell_data_vdf, cell_name)
+        return img_cell, img_ccm, img_ccm_aht
+            
+        
+    def get_processed_data(self, cell_name: str):
+        """
+        Get processed data for a cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The unique name of the cell.
+
+        Returns
+        -------
+        tuple
+            The processed data for the cell
+        """
+        cell = self.find_cell_by_name(cell_name)
+        if not cell:
+            logger.error(f'Cell not found: {cell_name}')
+            return None, None, None
+        
+        # TODO: This should be used in the future when the data is stored in the database
+        # return cell.load_cell_data(), cell.load_cell_cycle_metrics(), cell.load_cell_data_vdf()
+
+        project = cell.project
+        cell_data = self.filesystem_repository.load_from_local_pklgz(project.project_name, cell.cell_name, 'cell_data')
+        cell_cycle_metrics = self.filesystem_repository.load_from_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics')
+        cell_data_vdf = self.filesystem_repository.load_from_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf')
+
+        return cell_data, cell_cycle_metrics, cell_data_vdf
+
+
     def load_cell_images(self, cell_name: str):
         """
         Load cell images from the database.
@@ -120,7 +182,7 @@ class CellService:
 
     def get_combined_cell_data(self, cell_name: str, processor: Processor):
         """
-        Get combined cell cycler and vdf data for a cell.
+        Get combined cell data and cell data vdf for a cell.
 
         Parameters
         ----------
@@ -134,15 +196,17 @@ class CellService:
         dict
             Combined cell data
         """
-        cell = self.find_cell_by_name(cell_name)
-
-        if not cell:
-            logger.error(f'Cell not found: {cell_name}')
+        cell_data, _, cell_data_vdf = self.get_processed_data(cell_name)
+        if cell_data is None or cell_data_vdf is None:
+            logger.error(f'Processed data not found for cell: {cell_name}')
             return
         
-        cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
-        # Process cell data
-        return processor.combine_data(cycler_trs, vdf_trs)
+        combined_cell_data = processor.combine_data(cell_data, cell_data_vdf)
+
+        # Save combined data to local file
+        project = self.find_cell_by_name(cell_name).project
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell_name, 'combined_cell_data', combined_cell_data)
+        return combined_cell_data
 
 
     def change_cell_project(self, cell_name: str, new_project_name: str):
@@ -239,3 +303,31 @@ class CellService:
             A list of Cell objects in the specified project
         """
         return self.cell_repository.find_by_project(project_name)
+    
+    def delete_cell(self, cell_name: str):
+        """
+        This method deletes a Cell and all associated TestRecords from the database.
+
+        Parameters
+        ----------
+        cell_name : str
+            The name of the cell to delete
+        """
+
+        cell = self.cell_repository.find_by_name(cell_name)
+        if not cell:
+            logger.info(f'Cell not found: {cell_name}')
+            return
+
+        # Delete associated test records
+        trs = self.test_record_repository.find_by_cell_name(cell_name)
+        for tr in trs:
+            self.test_record_repository.delete(tr)
+        self.test_record_repository.commit()
+        logger.info(f'Deleted test records for cell: {cell_name}')
+        
+        self.cell_repository.delete(cell)
+        self.cell_repository.commit()
+        logger.info(f'Deleted cell: {cell_name}')
+
+    

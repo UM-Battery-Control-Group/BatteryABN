@@ -770,7 +770,7 @@ class Processor:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = pd.DataFrame()
                     
-                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP])
+                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s')
                 if not t_vdf.empty:
                     rpt_subcycle[Const.DATA_VDF] = self.cell_data_vdf.loc[(t_vdf > t_start) & (t_vdf < t_end)]
 
@@ -1197,18 +1197,17 @@ class Processor:
     
     # ---------------------------------#
 
-    def combine_data(self, cycler_trs: list[TestRecord], vdf_trs: list[TestRecord]) -> pd.DataFrame:
+    def combine_data(self, cell_data: pd.DataFrame, cell_data_vdf: pd.DataFrame) -> pd.DataFrame:
         """
-        Combine the data for all the TestRecords for a single cell. 
-        Downsample the cycle data to match the VDF data.
-        The columns of the combined data are the union of the columns of the cycler and VDF data and the test name.
+        Get expansion (um), counts, standard deviation (std), drive current, reference expansion from cell_data_vdf.
+        Join these 5 columns to dataframe in cell_data by matching timestamp between cell_data and cell_data_vdf.
 
         Parameters
         ----------
-        cycler_trs : list[TestRecord]
-            List of cycler TestRecords
-        vdf_trs : list[TestRecord]
-            List of VDF TestRecords
+        cell_data : pd.DataFrame
+            Data from the cycler
+        cell_data_vdf : pd.DataFrame    
+            Data from the VDF
 
         Returns
         -------
@@ -1216,30 +1215,18 @@ class Processor:
             Combined data
         """
 
-        cycler_trs = self.sort_trs(cycler_trs)
-        vdf_trs = self.sort_trs(vdf_trs)
+        # Extract the relevant columns from cell_data_vdf
+        cell_data_vdf = cell_data_vdf[[Const.TIMESTAMP, Const.EXPANSION, Const.EXPANSION_UM, Const.EXPANSION_STDDEV, Const.DRIVE_CURRENT, Const.EXPANSION_REF]]
+        cell_data_vdf[Const.TIMESTAMP] = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP], unit='ms')
+        cell_data = cell_data.sort_values(by=Const.TIMESTAMP)
+        cell_data_vdf = cell_data_vdf.sort_values(by=Const.TIMESTAMP)
 
-        cycler_dfs, vdf_dfs = [], []
-        for cycler_tr in cycler_trs:
-            df = cycler_tr.get_test_data()
-            Utils.add_column(df, 'cycle test name', cycler_tr.test_name)
-            cycler_dfs.append(df)
-        for vdf_tr in vdf_trs:
-            df = vdf_tr.get_test_data()
-            Utils.add_column(df, 'vdf test name', vdf_tr.test_name)
-            vdf_dfs.append(df)
-        cycler_dfs = pd.concat(cycler_dfs, ignore_index=True)
-        vdf_dfs = pd.concat(vdf_dfs, ignore_index=True)
-        vdf_dfs[Const.TIMESTAMP] = pd.to_datetime(df[Const.TIMESTAMP], unit='ms')
-
-        cycler_dfs.set_index(Const.TIMESTAMP, inplace=True)
-        vdf_dfs.set_index(Const.TIMESTAMP, inplace=True)
-        cycler_dfs.reset_index(inplace=True)
-        vdf_dfs.reset_index(inplace=True)
-        cycler_dfs.dropna(subset=[Const.TIMESTAMP], inplace=True)
-        vdf_dfs.dropna(subset=[Const.TIMESTAMP], inplace=True)
-
-        merged_df = pd.merge_asof(cycler_dfs, vdf_dfs, on=Const.TIMESTAMP, direction='nearest', tolerance=pd.Timedelta('1000s'))
-        merged_df.dropna(inplace=True)
-
-        return merged_df
+        # Merge the dataframes on the timestamp
+        merged_data = pd.merge_asof(
+            cell_data,
+            cell_data_vdf,
+            on=Const.TIMESTAMP,
+            direction='nearest',
+            tolerance=pd.Timedelta('1s')  # 1 second tolerance
+        )
+        return merged_data

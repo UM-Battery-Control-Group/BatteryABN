@@ -14,21 +14,21 @@ class Viewer:
         """
         pass
 
-    def plot(self, processor: Processor, cell_name: str):
+    def plot(self, cell_data: pd.DataFrame, cell_cycle_metrics: pd.DataFrame, cell_data_vdf: pd.DataFrame, cell_name: str):
         """
         Plot the processed cell data.
 
         Parameters
         ----------
-        processor : Processor
-            Processor object with processed cell data
+        cell_data : pd.DataFrame
+            The processed cell data
+        cell_cycle_metrics : pd.DataFrame
+            The cycle metrics for the cell
+        cell_data_vdf : pd.DataFrame
+            The processed cell data from the VDF
         cell_name : str
             The name of the cell
         """
-
-        cell_data = processor.cell_data
-        cell_data_vdf = processor.cell_data_vdf
-        cell_cycle_metrics = processor.cell_cycle_metrics
         
         fig1 = self.plot_process_cell(cell_data, cell_data_vdf, cell_cycle_metrics, cell_name)
         fig2 = self.plot_cycle_metrics_time(cell_data, cell_data_vdf, cell_cycle_metrics, cell_name)

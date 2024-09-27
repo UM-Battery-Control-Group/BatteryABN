@@ -22,3 +22,14 @@ class ProjectRepository(BaseRepository):
             The Project object with the specified name
         """
         return self.session.query(Project).filter_by(project_name=project_name.upper()).first()
+
+    def get_all_projects(self):
+        """
+        This method returns all projects in the database.
+
+        Returns
+        -------
+        List[Project]
+            A list of all Project objects in the database
+        """
+        return self.session.query(Project).all()

@@ -91,3 +91,29 @@ class FileSystemRepository:
         img.savefig(file_path)
 
         logger.info(f'Saved image to local file: {file_path}')
+
+    def load_from_local_pklgz(self, project: str, cell_name: str, data_name: str) -> pd.DataFrame:
+        """
+        Load data from a local pickle file that is compressed with gzip.
+
+        Parameters
+        ----------
+        project : str
+            The name of the project
+        cell_name : str
+            The name of the cell
+        data_name : str
+            The name of the data
+
+        Returns
+        -------
+        pd.DataFrame
+            The loaded data
+        """
+
+        file_path = os.path.join(self.root_directory, project, cell_name, f'{data_name}.pkl.gz')
+        with gzip.open(file_path, 'rb') as f:
+            data = pickle.load(f)
+
+        logger.info(f'Loaded data from local file: {file_path}')
+        return data
