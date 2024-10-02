@@ -1,14 +1,10 @@
-import pickle
 import pandas as pd
-from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, BIGINT
-from sqlalchemy.orm import relationship
-
 from batteryabn import Constants
 from batteryabn.utils import Utils
-from .base import Base
+from .base import db
 
 
-class TestRecord(Base):
+class TestRecord(db.Model):
 
     """
     Class for storing battery test data.
@@ -28,16 +24,17 @@ class TestRecord(Base):
     """
     __tablename__ = 'testrecords'
 
-    id = Column(Integer, primary_key=True)
-    test_name = Column(String, unique=True)
-    test_type = Column(String)
-    cell_name = Column(String, ForeignKey('cells.cell_name'))
+    id = db.Column(db.Integer, primary_key=True)
+    test_name = db.Column(db.String, unique=True)
+    test_type = db.Column(db.String)
+    cell_name = db.Column(db.String, db.ForeignKey('cells.cell_name'))
     # Store test data as pickled object
-    test_data = Column(LargeBinary) 
-    test_metadata = Column(LargeBinary)
-    start_time = Column(BIGINT, nullable=True) # Unix timestamp
-    last_update_time = Column(BIGINT) # Unix timestamp
-    cell = relationship("Cell", back_populates="test_records")
+    test_data = db.Column(db.LargeBinary) 
+    test_metadata = db.Column(db.LargeBinary)
+    start_time = db.Column(db.BIGINT, nullable=True)  # Unix timestamp
+    last_update_time = db.Column(db.BIGINT)  # Unix timestamp
+    # Relationship with the Cell model
+    cell = db.relationship("Cell", back_populates="test_records")
 
 
     def get_test_data(self) -> pd.DataFrame:

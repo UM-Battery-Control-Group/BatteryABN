@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from flask_injector import inject
-from services import TestRecordService
+from batteryabn.services import TestRecordService
 
 trs_bp = Blueprint('tests', __name__)
 

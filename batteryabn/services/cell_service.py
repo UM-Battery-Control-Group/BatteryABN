@@ -1,4 +1,4 @@
-import pickle
+from flask_injector import inject
 from batteryabn import logger, Constants as Const
 from batteryabn.models import Cell, Project
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository, FileSystemRepository
@@ -9,6 +9,7 @@ class CellService:
     """
     The CellService class provides an interface for creating and querying Cell objects.
     """
+    @inject
     def __init__(self, cell_repository: CellRepository, test_record_repository: TestRecordRepository, 
                  project_repository: ProjectRepository, filesystem_repository: FileSystemRepository):
         self.cell_repository = cell_repository
@@ -90,7 +91,6 @@ class CellService:
         #     logger.error(f'Failed to save processed data for cell: {cell_name}. Error: {e}')
         #     raise e
         
-        print(f'start saving data to local file')
         # Save data to local file
         self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
         self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
@@ -100,7 +100,6 @@ class CellService:
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'cell', img_cell)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm', img_ccm)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht)    
-        print(f'finished saving data to local file')
 
     def generate_cell_images_by_processed_data(self, cell_name: str, viewer: Viewer):
         """

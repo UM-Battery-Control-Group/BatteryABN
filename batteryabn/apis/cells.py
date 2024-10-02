@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from flask_injector import inject
-from services import CellService
+from batteryabn.services import CellService
 
 cells_bp = Blueprint('cells', __name__)
 

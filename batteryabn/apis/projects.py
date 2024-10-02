@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify
-from services import ProjectService
+from flask import Blueprint, jsonify
 from flask_injector import inject
+from batteryabn.services import ProjectService
 
 projects_bp = Blueprint('projects', __name__)
 

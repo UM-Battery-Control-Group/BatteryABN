@@ -1,12 +1,13 @@
+from flask_injector import inject
 from batteryabn import logger
 from batteryabn.models import Project
 from batteryabn.repositories import ProjectRepository
-
 
 class ProjectService:
     """
     The ProjectService class provides an interface for creating and querying Project objects.
     """
+    @inject
     def __init__(self, project_repository: ProjectRepository):
         self.project_repository = project_repository
 

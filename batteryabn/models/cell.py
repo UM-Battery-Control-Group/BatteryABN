@@ -1,29 +1,29 @@
-from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey
-from sqlalchemy.orm import relationship
-
 from batteryabn.utils import Utils
-from .base import Base
+from .base import db
 
-class Cell(Base):
+class Cell(db.Model):
     """
     Class for storing battery cell data.
     """
 
     __tablename__ = 'cells'
 
-    id = Column(Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    cell_name = db.Column(db.String, unique=True)
     # Unique cell name. i.e. 'GMJuly2022_CELL002'
-    cell_name = Column(String, unique=True) 
-    test_records = relationship("TestRecord", back_populates="cell")
-    project_name = Column(String, ForeignKey('projects.project_name'))
-    project = relationship("Project", back_populates="cells")
-    cell_data = Column(LargeBinary, nullable=True)
-    cell_cycle_metrics = Column(LargeBinary, nullable=True)
-    cell_data_vdf = Column(LargeBinary, nullable=True)
+    test_records = db.relationship("TestRecord", back_populates="cell")
+    project_name = db.Column(db.String, db.ForeignKey('projects.project_name'))
+    project = db.relationship("Project", back_populates="cells")
+
+    # Binary data fields
+    cell_data = db.Column(db.LargeBinary, nullable=True)
+    cell_cycle_metrics = db.Column(db.LargeBinary, nullable=True)
+    cell_data_vdf = db.Column(db.LargeBinary, nullable=True)
+
     # Images for the processed data
-    image_cell = Column(LargeBinary, nullable=True)
-    image_ccm = Column(LargeBinary, nullable=True)
-    image_ccm_aht = Column(LargeBinary, nullable=True)
+    image_cell = db.Column(db.LargeBinary, nullable=True)
+    image_ccm = db.Column(db.LargeBinary, nullable=True)
+    image_ccm_aht = db.Column(db.LargeBinary, nullable=True)
 
 
     def load_cell_data(self):

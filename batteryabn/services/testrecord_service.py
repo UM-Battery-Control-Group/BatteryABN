@@ -1,3 +1,4 @@
+from flask_injector import inject
 from batteryabn import logger, Constants as Const
 from batteryabn.models import TestRecord, Cell, Project
 from batteryabn.utils import Parser, Formatter, Utils
@@ -8,6 +9,7 @@ class TestRecordService:
     """
     The TestRecordService class provides an interface for saving TestRecord objects.
     """
+    @inject
     def __init__(self, cell_repository: CellRepository, test_record_repository: TestRecordRepository, project_repository: ProjectRepository):
         self.cell_repository = cell_repository
         self.test_record_repository = test_record_repository

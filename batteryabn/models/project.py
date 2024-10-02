@@ -1,22 +1,19 @@
-from sqlalchemy import Column, Integer, String, Float
-from sqlalchemy.orm import relationship
-
 from batteryabn import Constants as Const
-from .base import Base
+from .base import db
 
 
-class Project(Base):
+class Project(db.Model):
     """
     Class for the test project. A project is a collection of cells.
     """
 
     __tablename__ = 'projects'
 
-    id = Column(Integer, primary_key=True)
-    project_name = Column(String, unique=True)
-    cells = relationship("Cell", back_populates="project")
-    qmax = Column(Float)
-    i_c20 = Column(Float)
+    id = db.Column(db.Integer, primary_key=True)
+    project_name = db.Column(db.String, unique=True)
+    cells = db.relationship("Cell", back_populates="project")
+    qmax = db.Column(db.Float)
+    i_c20 = db.Column(db.Float)
 
     def get_qmax(self):
         """

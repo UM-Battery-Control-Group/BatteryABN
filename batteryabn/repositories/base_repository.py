@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
+from batteryabn.models import db
 
 
 class BaseRepository:
-    def __init__(self, session: Session):
-        self.session = session
+
+    def __init__(self):
+        self.session = db.session
 
     def add(self, instance):
         """Add a new instance to the session."""
