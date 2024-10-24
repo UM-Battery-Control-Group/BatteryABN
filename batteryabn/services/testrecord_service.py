@@ -158,6 +158,22 @@ class TestRecordService:
             A list of TestRecord objects associated with the specified cell
         """
         return self.test_record_repository.find_by_cell_name(cell_name)
+    
+    def find_test_records_by_keyword(self, keyword: str):
+        """
+        This method finds all TestRecords that match a keyword.
+
+        Parameters
+        ----------
+        keyword : str
+            The keyword to search for
+
+        Returns
+        -------
+        List[TestRecord]
+            A list of TestRecord objects that match the keyword
+        """
+        return self.test_record_repository.find_by_keyword(keyword)
 
 
     def delete_test_record(self, test_name: str):

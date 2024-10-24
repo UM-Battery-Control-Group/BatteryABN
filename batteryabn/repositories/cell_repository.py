@@ -38,3 +38,19 @@ class CellRepository(BaseRepository):
             A list of Cell objects in the specified project
         """
         return self.session.query(Cell).filter_by(project_name=project_name.upper()).all()
+    
+    def find_by_keyword(self, keyword: str):
+        """
+        This method finds all Cells that match a keyword.
+
+        Parameters
+        ----------
+        keyword : str
+            The keyword to search for
+
+        Returns
+        -------
+        list
+            A list of Cell objects that match the keyword
+        """
+        return self.session.query(Cell).filter(Cell.cell_name.ilike(f'%{keyword}%')).all()

@@ -26,8 +26,7 @@ class FileSystemRepository:
             The data to save
         """
 
-        project_dir = os.path.join(self.root_directory, project)
-        cell_dir = os.path.join(project_dir, cell_name)
+        cell_dir = self.get_cell_dir(project, cell_name)
         if not os.path.exists(cell_dir):
             os.makedirs(cell_dir)
 
@@ -54,8 +53,7 @@ class FileSystemRepository:
             The data to save
         """
 
-        project_dir = os.path.join(self.root_directory, project)
-        cell_dir = os.path.join(project_dir, cell_name)
+        cell_dir = self.get_cell_dir(project, cell_name)
         if not os.path.exists(cell_dir):
             os.makedirs(cell_dir)
 
@@ -80,9 +78,7 @@ class FileSystemRepository:
         img : matplotlib.figure.Figure
             The image to save
         """
-
-        project_dir = os.path.join(self.root_directory, project)
-        cell_dir = os.path.join(project_dir, cell_name)
+        cell_dir = self.get_cell_dir(project, cell_name)
         if not os.path.exists(cell_dir):
             os.makedirs(cell_dir)
 
@@ -117,3 +113,40 @@ class FileSystemRepository:
 
         logger.info(f'Loaded data from local file: {file_path}')
         return data
+    
+    def get_cell_dir(self, project: str, cell_name: str):
+        """
+        Get the directory for a cell.
+
+        Parameters
+        ----------
+        project : str
+            The name of the project
+        cell_name : str
+            The name of the cell
+
+        Returns
+        -------
+        str
+            The directory for the cell
+        """
+        return os.path.join(self.root_directory, project, cell_name)
+    
+    def get_cell_imgs_paths(self, project: str, cell_name: str):
+        """
+        Get the paths for the images of a cell.
+
+        Parameters
+        ----------
+        project : str
+            The name of the project
+        cell_name : str
+            The name of the cell
+
+        Returns
+        -------
+        tuple
+            The paths for the images of the cell
+        """
+        cell_dir = self.get_cell_dir(project, cell_name)
+        return os.path.join(cell_dir, f'{cell_name}_cell.png'), os.path.join(cell_dir, f'{cell_name}_ccm.png'), os.path.join(cell_dir, f'{cell_name}_ccm_aht.png')

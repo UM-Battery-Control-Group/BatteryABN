@@ -156,6 +156,36 @@ class CellService:
 
         return cell_data, cell_cycle_metrics, cell_data_vdf
 
+    def get_data(self, cell_name: str, data_type: str):
+        """
+        Get cell data for a cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The unique name of the cell.
+        data_type : str
+            The type of data to get
+
+        Returns
+        -------
+        dict
+            The cell data
+        """
+        cell = self.find_cell_by_name(cell_name)
+        if not cell:
+            logger.error(f'Cell not found: {cell_name}')
+            return None
+        
+        # TODO: This should be used in the future when the data is stored in the database
+
+        project = cell.project
+        try:
+            cell_data = self.filesystem_repository.load_from_local_pklgz(project.project_name, cell.cell_name, data_type)
+        except Exception as e:
+            logger.error(f'Failed to load data for cell: {cell_name}. Error: {e}')
+            return None
+        return cell_data
 
     def load_cell_images(self, cell_name: str):
         """
@@ -303,6 +333,22 @@ class CellService:
         """
         return self.cell_repository.find_by_project(project_name)
     
+    def find_cells_by_keyword(self, keyword: str):
+        """
+        This method finds all Cells with a keyword in their name.
+
+        Parameters
+        ----------
+        keyword : str
+            The keyword to search for in cell names
+
+        Returns
+        -------
+        list
+            A list of Cell objects with the specified keyword in their name
+        """
+        return self.cell_repository.find_by_keyword(keyword)
+    
     def delete_cell(self, cell_name: str):
         """
         This method deletes a Cell and all associated TestRecords from the database.
@@ -328,5 +374,28 @@ class CellService:
         self.cell_repository.delete(cell)
         self.cell_repository.commit()
         logger.info(f'Deleted cell: {cell_name}')
+
+    def get_cell_imgs_paths(self, cell_name:str):
+        """
+        Get paths to cell images for a cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The name of the cell
+
+        Returns
+        -------
+        tuple
+            Paths to cell images
+        """
+
+        #TODO: Temporary solution for images saved in local files
+        cell = self.find_cell_by_name(cell_name)
+        if not cell:
+            logger.error(f'Cell not found: {cell_name}')
+            return
+        project = cell.project
+        return self.filesystem_repository.get_cell_imgs_paths(project.project_name, cell_name)
 
     

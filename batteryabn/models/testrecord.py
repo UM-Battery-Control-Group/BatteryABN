@@ -110,8 +110,6 @@ class TestRecord(db.Model):
             'test_name': self.test_name,
             'test_type': self.test_type,
             'cell_name': self.cell_name,
-            'test_data': self.get_test_data(),
-            'test_metadata': self.get_test_metadata(),
             'start_time': self.start_time,
             'last_update_time': self.last_update_time
         }

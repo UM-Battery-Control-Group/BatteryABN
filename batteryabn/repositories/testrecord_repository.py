@@ -12,3 +12,6 @@ class TestRecordRepository(BaseRepository):
     
     def find_by_cell_name(self, cell_name: str):
         return self.session.query(TestRecord).filter_by(cell_name=cell_name.upper()).all()
+    
+    def find_by_keyword(self, keyword: str):
+        return self.session.query(TestRecord).filter(TestRecord.test_name.ilike(f'%{keyword}%')).all()
