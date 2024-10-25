@@ -19,3 +19,9 @@ export const getCellImages = async (name, index) => {
 export const getTestRecordsByCell = (name) => axios.get(`${API_URL}/trs/cell/${name}`);
 export const getTestRecordByName = (name) => axios.get(`${API_URL}/trs/${name}`);
 export const getTestRecordsByKeyword = (keyword) => axios.get(`${API_URL}/trs/search/${keyword}`);
+
+export const getTasksStatus = () => axios.get(`${API_URL}/tasks/status`);
+export const enqueueUpdateTask = (cellName) => axios.post(`${API_URL}/tasks/trs/update/${cellName}`);
+export const enqueueResetTask = (cellName) => axios.post(`${API_URL}/tasks/trs/reset/${cellName}`);
+export const enqueueCreateTask = (cellName) => axios.post(`${API_URL}/tasks/cell/create/${cellName}`);
+export const enqueueProcessTask = (cellName) => axios.post(`${API_URL}/tasks/cell/process/${cellName}`);

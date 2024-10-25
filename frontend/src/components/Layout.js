@@ -15,6 +15,7 @@ const Layout = ({ children, title }) => {
     { text: 'Projects', path: '/' },
     { text: 'Cells', path: '/cells' },
     { text: 'Test Records', path: '/trs' },
+    { text: 'Task Manager', path: '/tasks' },
   ];
 
   const drawer = (

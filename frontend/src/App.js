@@ -7,6 +7,8 @@ import CellSearch from './components/CellSearch';
 import TestRecordList from './components/TestRecordList';
 import TestRecordDetails from './components/TestRecordDetails';
 import TestRecordSearch from './components/TestRecordSearch';
+import TaskManager from './components/TaskManager';
+import TaskStatus from './components/TaskStatus';
 import './App.css';
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
             <Route path="/trs" element={<TestRecordSearch />} />
             <Route path="/trs/:cellName" element={<TestRecordList />} />
             <Route path="/tr/:trName" element={<TestRecordDetails />} />
+            <Route path="/tasks" element={<TaskManager />} />
+            <Route path="/tasks/status" element={<TaskStatus />} />
           </Routes>
         </main>
       </div>
