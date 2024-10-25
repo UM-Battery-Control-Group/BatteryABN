@@ -40,7 +40,7 @@ class TestRecordService:
 
         # If test record exists and is up-to-date, no action needed
         # TODO: Size check
-        if not reset and test_record and test_record.last_update_time >= formatter.last_update_time:
+        if not reset and test_record and test_record.last_update_time and test_record.last_update_time >= formatter.last_update_time:
             logger.info(f'Test record already exists and is up-to-date: {test_name}')
             return
 

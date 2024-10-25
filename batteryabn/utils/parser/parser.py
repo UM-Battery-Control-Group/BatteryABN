@@ -66,12 +66,12 @@ class Parser:
             Path to Arbin test data file
         """
         # Create a backup of the file before reading it, the modified cellpy read function will change the file
-        backup_file_path = Utils.backup_file(file_path)
+        # backup_file_path = Utils.backup_file(file_path)
         arbin_raw_df, arbin_summary_df, arbin_steps_df = self.__read_cellpy(file_path)
 
         # Store raw test data
         self.raw_test_data = arbin_raw_df
-        Utils.restore_file(backup_file_path)
+        # Utils.restore_file(backup_file_path)
 
     def parse_biologic(self, file_path: str) -> None:
         """
