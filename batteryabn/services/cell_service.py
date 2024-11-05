@@ -70,6 +70,9 @@ class CellService:
         cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
         # Process cell data
         processor.process(cycler_trs, vdf_trs, cell.project)
+        if processor.cell_data.empty:
+            logger.error(f'No data found for cell: {cell_name}')
+            return
         # Genrate images for processed data
         img_cell, img_ccm, img_ccm_aht = viewer.plot(processor.cell_data, processor.cell_cycle_metrics, processor.cell_data_vdf, cell_name)
 
@@ -287,18 +290,21 @@ class CellService:
 
         Returns
         -------
-        list
+        dict
             Cycler test records
-        list
+        dict
             Vdf test records
         """
         trs = self.test_record_repository.find_by_cell_name(cell.cell_name)
-        cycler_trs, vdf_trs = [], []
+        cycler_trs, vdf_trs = {}, {}
         for tr in trs:
+            if tr.last_update_time is None:
+                #TODO: Maybe check more details if the test record contains data
+                continue
             if tr.test_type == Const.VDF:
-                vdf_trs.append(tr)
+                vdf_trs[tr.test_name] = tr
             else:
-                cycler_trs.append(tr)
+                cycler_trs[tr.test_name] = tr
         return cycler_trs, vdf_trs
 
     def find_cell_by_name(self, cell_name: str):

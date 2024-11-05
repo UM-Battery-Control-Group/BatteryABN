@@ -103,6 +103,7 @@ class Formatter:
         ) / 3600
         aht_calculated = np.append(aht_calculated, aht_calculated[-1] if len(aht_calculated) > 0 else 0)
         df[Const.AHT] = aht_calculated
+        logger.info(f'AHT calculated: {df[Const.AHT].iloc[-1]}')
 
         if test_type == Const.BIOLOGIC:
             if(max(abs(df[Const.CURRENT]))>20): 

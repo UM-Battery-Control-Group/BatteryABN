@@ -42,17 +42,17 @@ class Processor:
         self.cell_cycle_metrics = cycle_metrics
         self.cell_data_vdf = data_vdf
 
-    def process(self, cycler_trs: list[TestRecord], vdf_trs: list[TestRecord] = None, project: Project = None) -> None:
+    def process(self, cycler_trs: dict, vdf_trs: dict = None, project: Project = None) -> None:
         """
         Process battery test data.
 
         Parameters
         ----------
-        cycler_trs : list[TestRecord]
-            List of TestRecord objects for cycler data
+        cycler_trs : dict
+            Dictionary, keys are test names and values are lists of TestRecord objects for cycler data
 
-        vdf_trs : list[TestRecord], optional
-            List of TestRecord objects for voltage data
+        vdf_trs : dict, optional
+            Dictionary, keys are test names and values are lists of TestRecord objects for VDF data
 
         project : Project, optional
             Project object
@@ -60,6 +60,8 @@ class Processor:
 
         # Process cycler data
         cell_data, cell_cycle_metrics = self.process_cycler_data(cycler_trs, project)
+        if cell_data is None or cell_cycle_metrics is None:
+            return
 
         cell_data_vdf, cell_cycle_metrics = self.process_cycler_expansion(vdf_trs, cell_cycle_metrics)    
 
@@ -74,14 +76,14 @@ class Processor:
 
 #-----------------Cycler Expansion Processing-----------------#
 
-    def process_cycler_expansion(self, trs: list[TestRecord], cell_cycle_metrics: pd.DataFrame):
+    def process_cycler_expansion(self, trs: dict, cell_cycle_metrics: pd.DataFrame):
         """
         Process cycler expansion data.
 
         Parameters
         ----------
-        trs : list[TestRecord]
-            List of TestRecord objects
+        trs : dict
+            Dictionary, keys are test names and values are lists of TestRecord objects
         cell_cycle_metrics : pd.DataFrame
             Cycler cycle metrics
 
@@ -141,15 +143,15 @@ class Processor:
 
         return cell_data_vdf, cell_cycle_metrics        
 
-    def combine_cycler_expansion_data(self, trs: list[TestRecord]):
+    def combine_cycler_expansion_data(self, trs: dict):
         """
         Combine cycler expansion data from multiple files into a single dataframe.
         It will calculate the min, max, and reversible expansion for each cycle. 
 
         Parameters
         ----------
-        trs : list[TestRecord]
-            List of TestRecord objects
+        trs : dict
+            Dictionary, keys are test names and values are lists of TestRecord objects
 
         Returns
         -------
@@ -158,7 +160,7 @@ class Processor:
         """
         dfs = []
         trs = self.sort_trs(trs)
-        for tr in trs:
+        for name, tr in trs.items():
             dfs.append(self.process_cycler_expansion_tr(tr))
         logger.info(f"Combining {len(dfs)} dataframes")
 
@@ -243,14 +245,14 @@ class Processor:
 
 #-----------------Cycler Data Processing-----------------#
 
-    def process_cycler_data(self, trs: list[TestRecord], project: Project):
+    def process_cycler_data(self, trs: dict, project: Project):
         """
         Process cycler data.
 
         Parameters
         ----------
-        trs : list[TestRecord]
-            List of TestRecord objects
+        trs : dict
+            Dictionary, keys are test names and values are lists of TestRecord objects
         project : Project
             Project object
 
@@ -262,6 +264,9 @@ class Processor:
             Processed cycler cycle metrics
         """
         cell_data, cell_cycle_metrics = self.combine_cycler_data(trs)
+
+        if cell_data is None or cell_cycle_metrics is None:
+            return None, None
 
         qmax = project.get_qmax()
 
@@ -298,15 +303,15 @@ class Processor:
 
         return cell_data, cell_cycle_metrics
 
-    def combine_cycler_data(self, trs: list[TestRecord]):
+    def combine_cycler_data(self, trs: dict):
         """
         Combine cycler data from multiple files into a single dataframe.
         Concatenate data frames, identify cycles based on rests (I=0), then calculate min and max voltage and temperature for each cycle.
 
         Parameters
         ----------
-        trs : list[TestRecord]
-            List of TestRecord objects
+        trs : dict
+            Dictionary, keys are test names and values are lists of TestRecord objects
 
         Returns
         -------
@@ -319,24 +324,37 @@ class Processor:
         trs = self.sort_trs(trs)
         # Calculate the AHT based on the previous test record
         pre_aht = 0
-        for tr in trs:
+        for name, tr in trs.items():
+            logger.info(f"Processing cycler data for {name}")
             df = self.process_cycle_tr(tr, pre_aht)
+            if df.empty:
+                logger.warning(f"No data found for {name}")
+                continue
             pre_aht = df[Const.AHT].iloc[-1]
             dfs.append(df)
+
+        if len(dfs) == 0:
+            logger.debug("No cycler data found")
+            return None, None
+        
         logger.info(f"Combining {len(dfs)} dataframes")
         cell_data = pd.concat(dfs, ignore_index=True)
 
-        discharge_start_idxs_0 = np.where(cell_data[Const.DISCHARGE_CYCLE_IDC])[0]
-        charge_start_idxs_0 = np.where(cell_data[Const.CHARGE_CYCLE_IDC])[0]
-        capacity_check_idxs_0 = np.where(cell_data[Const.CAPACITY_CHECK_IDC])[0]
-        if len(discharge_start_idxs_0) > 1 and len(charge_start_idxs_0) > 1:
-            charge_start_idx, discharge_start_idx = self.match_charge_discharge(charge_start_idxs_0, discharge_start_idxs_0)
-            removed_charge_cycle_idx = list(set(charge_start_idxs_0).symmetric_difference(set(charge_start_idx)))
-            cell_data.loc[removed_charge_cycle_idx, Const.CHARGE_CYCLE_IDC] = False
-            removed_discharge_cycle_idx = list(set(discharge_start_idxs_0).symmetric_difference(set(discharge_start_idx)))
-            cell_data.loc[removed_discharge_cycle_idx, Const.DISCHARGE_CYCLE_IDC] = False
-            removed_capacity_check_idx = list(set(capacity_check_idxs_0).symmetric_difference(set(charge_start_idx)))
-            cell_data.loc[removed_capacity_check_idx, Const.CAPACITY_CHECK_IDC] = False
+
+        # TODO: This delete some discharge cycles that should be kept.
+        # discharge_start_idxs_0 = np.where(cell_data[Const.DISCHARGE_CYCLE_IDC])[0]
+        # charge_start_idxs_0 = np.where(cell_data[Const.CHARGE_CYCLE_IDC])[0]
+        # capacity_check_idxs_0 = np.where(cell_data[Const.CAPACITY_CHECK_IDC])[0]
+        # if len(discharge_start_idxs_0) > 1 and len(charge_start_idxs_0) > 1:
+        #     charge_start_idx, discharge_start_idx = self.match_charge_discharge(charge_start_idxs_0, discharge_start_idxs_0)
+        #     removed_charge_cycle_idx = list(set(charge_start_idxs_0).symmetric_difference(set(charge_start_idx)))
+        #     logger.info(f"Removed charge cycles: {removed_charge_cycle_idx}")
+        #     cell_data.loc[removed_charge_cycle_idx, Const.CHARGE_CYCLE_IDC] = False
+        #     removed_discharge_cycle_idx = list(set(discharge_start_idxs_0).symmetric_difference(set(discharge_start_idx)))
+        #     logger.info(f"Removed discharge cycles: {removed_discharge_cycle_idx}")
+        #     cell_data.loc[removed_discharge_cycle_idx, Const.DISCHARGE_CYCLE_IDC] = False
+        #     removed_capacity_check_idx = list(set(capacity_check_idxs_0).symmetric_difference(set(charge_start_idx)))
+        #     cell_data.loc[removed_capacity_check_idx, Const.CAPACITY_CHECK_IDC] = False
 
         cell_data[Const.CYCLE_IDC] = cell_data[Const.CHARGE_CYCLE_IDC] #default cycle indicator on charge
 
@@ -370,11 +388,19 @@ class Processor:
         logger.debug(f"Processing cycle data for {tr.test_name}")
         df = tr.get_test_data()
         df = df.reset_index(drop=True)
+
+        if df.empty:
+            logger.warning(f"No data found for {tr.test_name}")
+            return df
     
         # Add previous AHT to current AHT column
         df[Const.AHT] = df[Const.AHT] + pre_aht
 
         # Get the data
+        if df[Const.TIMESTAMP].dt.tz is None:
+            df[Const.TIMESTAMP] = df[Const.TIMESTAMP].dt.tz_localize("America/New_York", ambiguous=False, nonexistent='shift_forward')
+        else:
+            df[Const.TIMESTAMP] = df[Const.TIMESTAMP].dt.tz_convert("America/New_York")
         t = df[Const.TIMESTAMP].reset_index(drop=True)
         i = df[Const.CURRENT].reset_index(drop=True)
         protocal = tr.get_cycle_type()
@@ -769,13 +795,19 @@ class Processor:
                     if protocols == {Const.C20_CHARGE, Const.C20_DISCHARGE}:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = pd.DataFrame()
-                    
-                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s')
+                
+                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s').dt.tz_localize('UTC').dt.tz_convert('America/New_York')
+                t_start = pd.to_datetime(t_start)
+                t_end = pd.to_datetime(t_end)
+
                 if not t_vdf.empty:
                     rpt_subcycle[Const.DATA_VDF] = self.cell_data_vdf.loc[(t_vdf > t_start) & (t_vdf < t_end)]
 
                 cell_rpt_data_list.append(pd.DataFrame([rpt_subcycle]))
 
+        if not cell_rpt_data_list:
+            logger.warning("No RPT data found")
+            return
         cell_rpt_data = pd.concat(cell_rpt_data_list, ignore_index=True)
         cell_rpt_data.reset_index(drop=True, inplace=True)
 
@@ -1178,21 +1210,21 @@ class Processor:
         
         return ocp
     
-    def sort_trs(self, trs: list[TestRecord]):
+    def sort_trs(self, trs: dict):
         """
         Sort the TestRecords based on the timestamp.
 
         Parameters
         ----------
-        trs : list[TestRecord]
-            List of TestRecords
+        trs : dict  
+            Dictionary, key is the test record name and value is the TestRecord object
 
         Returns
         -------
-        list[TestRecord]
-            Sorted list of TestRecords
+        dict
+            Sorted TestRecords
         """
-        return sorted(trs, key=lambda x: x.last_update_time)
+        return dict(sorted(trs.items(), key=lambda item: item[1].last_update_time))
     
     
     # ---------------------------------#
@@ -1218,6 +1250,7 @@ class Processor:
         # Extract the relevant columns from cell_data_vdf
         cell_data_vdf = cell_data_vdf[[Const.TIMESTAMP, Const.EXPANSION, Const.EXPANSION_UM, Const.EXPANSION_STDDEV, Const.DRIVE_CURRENT, Const.EXPANSION_REF]]
         cell_data_vdf[Const.TIMESTAMP] = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP], unit='ms')
+        cell_data_vdf[Const.TIMESTAMP] = cell_data_vdf[Const.TIMESTAMP].dt.tz_localize("America/New_York")
         cell_data = cell_data.sort_values(by=Const.TIMESTAMP)
         cell_data_vdf = cell_data_vdf.sort_values(by=Const.TIMESTAMP)
 
