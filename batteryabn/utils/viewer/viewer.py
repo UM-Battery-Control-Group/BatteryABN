@@ -48,7 +48,8 @@ class Viewer:
 
         # Choose cell_data_vdf[Const.EXPANSION_UM] > -5000 to remove outliers
         vdf_filter_idx = cell_data_vdf[Const.EXPANSION_UM] > -5000
-        t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms')
+        t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms', utc=True)
+        t_vdf = t_vdf.dt.tz_convert(Const.DEFAULT_TIME_ZONE) 
         exp_vdf = cell_data_vdf[Const.EXPANSION_UM][vdf_filter_idx]
         temperature_vdf = cell_data_vdf[Const.TEMPERATURE][vdf_filter_idx]
 
@@ -146,7 +147,8 @@ class Viewer:
 
         # Choose cell_data_vdf[Const.EXPANSION_UM] > -5000 to remove outliers
         vdf_filter_idx = cell_data_vdf[Const.EXPANSION_UM] > -5000
-        t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms')
+        t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms', utc=True)
+        t_vdf = t_vdf.dt.tz_convert(Const.DEFAULT_TIME_ZONE) 
         exp_vdf = cell_data_vdf[Const.EXPANSION_UM][vdf_filter_idx]
         temperature_vdf = cell_data_vdf[Const.TEMPERATURE][vdf_filter_idx]
 

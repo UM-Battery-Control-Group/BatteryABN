@@ -226,7 +226,7 @@ class Constants:
 
 
 #------------------------------------Numeric:------------------------------------#
-    DEFAULT_TIME_ZONE_INFO = timezone(timedelta(days=-1, seconds=72000))
+    DEFAULT_TIME_ZONE = "America/New_York"
 
     QMAX = 3.8
     I_C20 = 0.177

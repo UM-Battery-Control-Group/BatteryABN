@@ -17,7 +17,7 @@ class Formatter:
             Timezone to use for formatting
         """
         # Default NY timezone
-        self.timezone = timezone if timezone else Const.DEFAULT_TIME_ZONE_INFO
+        self.timezone = timezone if timezone else Const.DEFAULT_TIME_ZONE
 
         self.test_data = pd.DataFrame(dtype=object)
         self.metadata = {}

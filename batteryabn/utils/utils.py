@@ -346,7 +346,7 @@ class Utils:
         return fig
     
     @staticmethod
-    def timestamp_to_int(timestamp: pd.Timestamp, tz_info = Const.DEFAULT_TIME_ZONE_INFO) -> int:
+    def timestamp_to_int(timestamp: pd.Timestamp, tz_info = Const.DEFAULT_TIME_ZONE) -> int:
         """
         Function to convert a timestamp to a Unix timestamp
 
@@ -355,7 +355,7 @@ class Utils:
         timestamp : pd.Timestamp
             Timestamp to convert
         tz_info : timezone, optional
-            Timezone info, by default Const.DEFAULT_TIME_ZONE_INFO
+            Timezone info, by default Const.DEFAULT_TIME_ZONE
 
         Returns
         -------

@@ -63,7 +63,7 @@ class Processor:
         if cell_data is None or cell_cycle_metrics is None:
             return
 
-        cell_data_vdf, cell_cycle_metrics = self.process_cycler_expansion(vdf_trs, cell_cycle_metrics)    
+        cell_data_vdf, cell_cycle_metrics = self.process_cycler_expansion(vdf_trs, cell_cycle_metrics)
 
         # Rearrange columns of cell_cycle_metrics for easy reading with data on left and others on right
         cols = cell_cycle_metrics.columns.to_list()
@@ -194,7 +194,7 @@ class Processor:
         df = df[(df[Const.EXPANSION] >1e1) & (df[Const.EXPANSION] <1e7)] #keep good signals 
         df[Const.EXPANSION_UM] = 1000 * (30.6 - (df[Const.CALIBRATION_X2] * (df[Const.EXPANSION] / 10**6)**2 + df[Const.CALIBRATION_X1] * (df[Const.EXPANSION] / 10**6) + df[Const.CALIBRATION_C]))
         df[Const.TEMPERATURE] = np.where((df[Const.TEMPERATURE] >= 200) & (df[Const.TEMPERATURE] <250), np.nan, df[Const.TEMPERATURE]) 
-
+        Utils.add_column(df, Const.TEST_NAME, tr.test_name)
         return df
 
 
@@ -398,9 +398,9 @@ class Processor:
 
         # Get the data
         if df[Const.TIMESTAMP].dt.tz is None:
-            df[Const.TIMESTAMP] = df[Const.TIMESTAMP].dt.tz_localize("America/New_York", ambiguous=False, nonexistent='shift_forward')
-        else:
-            df[Const.TIMESTAMP] = df[Const.TIMESTAMP].dt.tz_convert("America/New_York")
+            df[Const.TIMESTAMP] = df[Const.TIMESTAMP].dt.tz_localize(Const.DEFAULT_TIME_ZONE, ambiguous=False, nonexistent='shift_forward')
+
+        df[Const.TIMESTAMP] = df[Const.TIMESTAMP].dt.tz_convert(Const.DEFAULT_TIME_ZONE)
         t = df[Const.TIMESTAMP].reset_index(drop=True)
         i = df[Const.CURRENT].reset_index(drop=True)
         protocal = tr.get_cycle_type()
@@ -796,7 +796,7 @@ class Processor:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = pd.DataFrame()
                 
-                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s').dt.tz_localize('UTC').dt.tz_convert('America/New_York')
+                t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s').dt.tz_localize('UTC').dt.tz_convert(Const.DEFAULT_TIME_ZONE)
                 t_start = pd.to_datetime(t_start)
                 t_end = pd.to_datetime(t_end)
 
@@ -1250,7 +1250,7 @@ class Processor:
         # Extract the relevant columns from cell_data_vdf
         cell_data_vdf = cell_data_vdf[[Const.TIMESTAMP, Const.EXPANSION, Const.EXPANSION_UM, Const.EXPANSION_STDDEV, Const.DRIVE_CURRENT, Const.EXPANSION_REF]]
         cell_data_vdf[Const.TIMESTAMP] = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP], unit='ms')
-        cell_data_vdf[Const.TIMESTAMP] = cell_data_vdf[Const.TIMESTAMP].dt.tz_localize("America/New_York")
+        cell_data_vdf[Const.TIMESTAMP] = cell_data_vdf[Const.TIMESTAMP].dt.tz_localize(Const.DEFAULT_TIME_ZONE)
         cell_data = cell_data.sort_values(by=Const.TIMESTAMP)
         cell_data_vdf = cell_data_vdf.sort_values(by=Const.TIMESTAMP)
 
