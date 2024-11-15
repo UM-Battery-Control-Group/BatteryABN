@@ -74,16 +74,16 @@ class CellService:
             logger.error(f'No data found for cell: {cell_name}')
             return
         # Genrate images for processed data
-        img_cell, img_ccm, img_ccm_aht = viewer.plot(processor.cell_data, processor.cell_cycle_metrics, processor.cell_data_vdf, cell_name)
+        img_cell, img_ccm, img_ccm_aht, img_cell_html, img_ccm_html, img_ccm_aht_html = viewer.plot(processor.cell_data, processor.cell_cycle_metrics, processor.cell_data_vdf, cell_name)
 
         # # Update cell data
         # cell.cell_data = Utils.gzip_pikle_dump(processor.cell_data)
         # cell.cell_cycle_metrics = Utils.gzip_pikle_dump(processor.cell_cycle_metrics)
         # cell.cell_data_vdf = Utils.gzip_pikle_dump(processor.cell_data_vdf)
 
-        cell.image_cell = Utils.image_to_binary(img_cell)
-        cell.image_ccm = Utils.image_to_binary(img_ccm)
-        cell.image_ccm_aht = Utils.image_to_binary(img_ccm_aht)
+        # cell.image_cell = Utils.image_to_binary(img_cell)
+        # cell.image_ccm = Utils.image_to_binary(img_ccm)
+        # cell.image_ccm_aht = Utils.image_to_binary(img_ccm_aht)
 
         # Save cell data
         # try:
@@ -103,6 +103,9 @@ class CellService:
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'cell', img_cell)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm', img_ccm)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht)    
+        self.filesystem_repository.save_html(project.project_name, cell.cell_name, 'cell', img_cell_html)
+        self.filesystem_repository.save_html(project.project_name, cell.cell_name, 'ccm', img_ccm_html)
+        self.filesystem_repository.save_html(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht_html)
 
     def generate_cell_images_by_processed_data(self, cell_name: str, viewer: Viewer):
         """
@@ -126,7 +129,7 @@ class CellService:
             logger.error(f'Processed data not found for cell: {cell_name}')
             return
         
-        img_cell, img_ccm, img_ccm_aht = viewer.plot(cell_data, cell_cycle_metrics, cell_data_vdf, cell_name)
+        img_cell, img_ccm, img_ccm_aht, img_cell_html, img_ccm_html, img_ccm_aht_html = viewer.plot(cell_data, cell_cycle_metrics, cell_data_vdf, cell_name)
         return img_cell, img_ccm, img_ccm_aht
             
         
@@ -403,5 +406,27 @@ class CellService:
             return
         project = cell.project
         return self.filesystem_repository.get_cell_imgs_paths(project.project_name, cell_name)
+    
+    def get_cell_htmls_paths(self, cell_name:str):
+        """
+        Get paths to cell images for a cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The name of the cell
+
+        Returns
+        -------
+        tuple
+            Paths to cell images
+        """
+        cell = self.find_cell_by_name(cell_name)
+        if not cell:
+            logger.error(f'Cell not found: {cell_name}')
+            return
+        project = cell.project
+        return self.filesystem_repository.get_cell_htmls_paths(project.project_name, cell_name)
+
 
     

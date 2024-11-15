@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 import numpy as np 
 import pandas as pd
+import mpld3
 
 from batteryabn import logger, Constants as Const
 from batteryabn.utils import Processor, Utils
@@ -33,8 +34,12 @@ class Viewer:
         fig1 = self.plot_process_cell(cell_data, cell_data_vdf, cell_cycle_metrics, cell_name)
         fig2 = self.plot_cycle_metrics_time(cell_data, cell_data_vdf, cell_cycle_metrics, cell_name)
         fig3 = self.plot_cycle_metrics_aht(cell_data, cell_data_vdf, cell_cycle_metrics, cell_name)
+        # Turn figs into html
+        fig1_html = mpld3.fig_to_html(fig1)
+        fig2_html = mpld3.fig_to_html(fig2)
+        fig3_html = mpld3.fig_to_html(fig3)
 
-        return fig1, fig2, fig3
+        return fig1, fig2, fig3, fig1_html, fig2_html, fig3_html
         
     def plot_process_cell(self, cell_data: pd.DataFrame, cell_data_vdf: pd.DataFrame, 
                           cell_cycle_metrics: pd.DataFrame, cell_name: str, downsample = 100):
@@ -66,9 +71,8 @@ class Viewer:
         capacity_check_in_cycle_idx = cell_cycle_metrics[cell_cycle_metrics[Const.CAPACITY_CHECK_IDC]].index
         charge_idx = cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index
 
-        # t_array = Utils.time_str_to_seconds(t)
-        # _, ips, vps, idxs = self.downsample_data(t_array, i.to_numpy(), v.to_numpy())
-        # tt = t[idxs]
+        _, ips, vps, idxs = self.downsample_data(t, i, v)
+        tt = t[idxs]
 
         logger.info("Plotting cell: " + cell_name)
         # Setup plot 
@@ -384,23 +388,27 @@ class Viewer:
         fig.suptitle("Cell: " + cell_name)
         fig.tight_layout()
         return fig
-
+    
     def downsample_data(self, t, i, v, dv=2e-3, di=0.1, dt=100):
-        if (len(t) > 1000):
-            dert = np.maximum(0.1, np.diff(t, prepend = 0))
-            deriv_v = savgol_filter(v, 20, 3, deriv = 1) / dert # probably need to update this if the sampling rate is too slow.
+        # Convert timestamps to Unix time in seconds for calculations
+        t_unix = t.apply(lambda x: x.timestamp())  # Apply timestamp conversion to each element
+
+        if len(t) > 1000:
+            dert = np.maximum(0.1, np.diff(t_unix, prepend=0))
+            deriv_v = savgol_filter(v, 20, 3, deriv=1) / dert
 
             dv_changes = np.abs(deriv_v) > dv
-            di_changes = (np.abs(np.diff(i, prepend = 0) / dert) > di) + (np.abs(np.diff(i, append=0) / np.maximum(0.1, np.diff(t, append=0))) > di)
-            dt_changes = t < 0
-            tlast=0
-            for j in range(len(t)):
-                if(t[j] >= tlast + dt):
-                    tlast = t[j]
+            di_changes = (np.abs(np.diff(i, prepend=0) / dert) > di) + (np.abs(np.diff(i, append=0) / np.maximum(0.1, np.diff(t_unix, append=0))) > di)
+            dt_changes = t_unix < 0
+            tlast = 0
+            for j in range(len(t_unix)):
+                if t_unix[j] >= tlast + dt:
+                    tlast = t_unix[j]
                     dt_changes[j] = True
-            index=dt_changes + dv_changes + di_changes
+            index = dt_changes + dv_changes + di_changes
         else:
-            index=range(len(t))
+            index = range(len(t))
+
         t_ds = t[index]
         i_ds = i[index]
         v_ds = v[index]

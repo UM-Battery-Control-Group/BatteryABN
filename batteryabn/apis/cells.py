@@ -37,12 +37,22 @@ def get_cell_images(cell_name: str, number: int, cell_service: CellService):
 
     #TODO: Temp solution since images saved in local file system
     image_paths =  cell_service.get_cell_imgs_paths(cell_name)
-    if not image_paths:
+    if not image_paths or number < 0 or number >= len(image_paths):
         return jsonify({"error": "Images not found"}), 404
-    if number < 0 or number >= len(image_paths):
-        return jsonify({"error": "Image not found"}), 404
     images = image_paths[number]
     return send_file(images, mimetype='image/png')
+
+@inject
+@cells_bp.route('/<cell_name>/htmls/<int:number>', methods=['GET'])    
+def get_cell_htmls(cell_name: str, number: int, cell_service: CellService):
+    """
+    Get html files for a cell.
+    """
+    html_paths =  cell_service.get_cell_htmls_paths(cell_name)
+    if not html_paths or number < 0 or number >= len(html_paths):
+        return jsonify({"error": "Html files not found"}), 404
+    html = html_paths[number]
+    return send_file(html, mimetype='text/html')
 
 @inject
 @cells_bp.route('/search/<keyword>', methods=['GET'])

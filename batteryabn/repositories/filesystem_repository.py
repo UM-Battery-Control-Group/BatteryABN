@@ -88,6 +88,32 @@ class FileSystemRepository:
 
         logger.info(f'Saved image to local file: {file_path}')
 
+    def save_html(self, project: str, cell_name: str, html_name: str, html: str):
+        """
+        Save an html string to a local html file.
+
+        Parameters
+        ----------
+        project : str
+            The name of the project
+        cell_name : str
+            The name of the cell
+        html_name : str
+            The name of the html
+        html : str
+            The html to save
+        """
+        cell_dir = self.get_cell_dir(project, cell_name)
+        if not os.path.exists(cell_dir):
+            os.makedirs(cell_dir)
+
+        # Save html to a local html file
+        file_path = os.path.join(cell_dir, f'{cell_name}_{html_name}.html')
+        with open(file_path, 'w') as f:
+            f.write(html)
+
+        logger.info(f'Saved html to local file: {file_path}')
+
     def load_from_local_pklgz(self, project: str, cell_name: str, data_name: str) -> pd.DataFrame:
         """
         Load data from a local pickle file that is compressed with gzip.
@@ -150,3 +176,22 @@ class FileSystemRepository:
         """
         cell_dir = self.get_cell_dir(project, cell_name)
         return os.path.join(cell_dir, f'{cell_name}_cell.png'), os.path.join(cell_dir, f'{cell_name}_ccm.png'), os.path.join(cell_dir, f'{cell_name}_ccm_aht.png')
+    
+    def get_cell_htmls_paths(self, project: str, cell_name: str):
+        """
+        Get the path for the html of a cell.
+
+        Parameters
+        ----------
+        project : str
+            The name of the project
+        cell_name : str
+            The name of the cell
+
+        Returns
+        -------
+        str
+            The path for the html of the cell
+        """
+        cell_dir = self.get_cell_dir(project, cell_name)
+        return os.path.join(cell_dir, f'{cell_name}_cell.html'), os.path.join(cell_dir, f'{cell_name}_ccm.html'), os.path.join(cell_dir, f'{cell_name}_ccm_aht.html')

@@ -14,6 +14,12 @@ export const getCellImages = async (name, index) => {
     });
     return URL.createObjectURL(response.data);  // Create a URL for the image
   };
+export const getCellImageHtmls = async (name, index) => {
+    const response = await axios.get(`${API_URL}/cells/${name}/htmls/${index}`, {
+      responseType: 'blob'
+    });
+    return URL.createObjectURL(response.data);
+  };
 
 
 export const getTestRecordsByCell = (name) => axios.get(`${API_URL}/trs/cell/${name}`);

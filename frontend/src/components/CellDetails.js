@@ -14,7 +14,7 @@ const CellDetails = () => {
     const fetchImages = async () => {
       try {
         console.log('Fetching images for cell:', cellName);
-        const imagePromises = [0, 1, 2].map(index => getCellImages(cellName, index)); 
+        const imagePromises = [0, 1, 2].map(index => getCellImages(cellName, index));
         const fetchedImages = await Promise.all(imagePromises);
         setImages(fetchedImages);
         setLoading(false);
@@ -27,8 +27,8 @@ const CellDetails = () => {
     fetchImages();
   }, [cellName]);
 
-  const goToTestRecords = () => {
-    navigate(`/trs/${cellName}`);
+  const handleViewDetail = (index) => {
+    navigate(`/cell/${cellName}/images/${index}`);
   };
 
   return (
@@ -40,7 +40,7 @@ const CellDetails = () => {
           <Typography variant="h5" gutterBottom>
             Images for Cell: {cellName}
           </Typography>
-  
+
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
             {images.map((image, index) => (
               <Card key={index} sx={{ maxWidth: '100%' }}>
@@ -48,22 +48,24 @@ const CellDetails = () => {
                   component="img"
                   image={image}
                   alt={`Cell ${cellName} Image ${index + 1}`}
-                  sx={{ width: '100%', height: 'auto' }} 
+                  sx={{ width: '100%', height: 'auto' }}
                 />
+                <Box sx={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => handleViewDetail(index)}
+                  >
+                    View Detail
+                  </Button>
+                </Box>
               </Card>
             ))}
-          </Box>
-  
-          <Box sx={{ marginTop: '2rem', textAlign: 'center' }}>
-            <Button variant="contained" color="primary" onClick={goToTestRecords}>
-              View Test Records
-            </Button>
           </Box>
         </>
       )}
     </Layout>
   );
-  
 };
 
 export default CellDetails;
