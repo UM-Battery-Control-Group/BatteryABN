@@ -2,8 +2,16 @@ from flask_injector import inject
 from batteryabn import logger, Constants as Const
 from batteryabn.models import Cell, Project
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository, FileSystemRepository
+from batteryabn.repositories import create_cell_repository, create_test_record_repository, create_project_repository, create_filesystem_repository
 from batteryabn.utils import Processor, Viewer, Utils
 
+
+def create_cell_service():
+    cell_repository = create_cell_repository()
+    test_record_repository = create_test_record_repository()
+    project_repository = create_project_repository()
+    filesystem_repository = create_filesystem_repository()
+    return CellService(cell_repository, test_record_repository, project_repository, filesystem_repository)
 
 class CellService:
     """
@@ -95,11 +103,11 @@ class CellService:
         #     raise e
         
         # Save data to local file
-        self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
-        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
-        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
-        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
-        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_rpt', processor.cell_data_rpt)
+        # self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
+        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_rpt', processor.cell_data_rpt)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'cell', img_cell)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm', img_ccm)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht)    

@@ -8,6 +8,9 @@ from galvani import BioLogic
 from batteryabn import logger, Constants as Const
 from batteryabn.utils import Utils
 
+def create_parser():
+    return Parser()
+
 class Parser:
     def __init__(self):
         """

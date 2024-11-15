@@ -1,7 +1,11 @@
 from flask_injector import inject
 from batteryabn import logger
 from batteryabn.models import Project
-from batteryabn.repositories import ProjectRepository
+from batteryabn.repositories import ProjectRepository, create_project_repository
+
+def create_project_service():
+    project_repository = create_project_repository()
+    return ProjectService(project_repository)
 
 class ProjectService:
     """

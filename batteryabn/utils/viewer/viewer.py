@@ -7,6 +7,9 @@ import mpld3
 from batteryabn import logger, Constants as Const
 from batteryabn.utils import Processor, Utils
 
+def create_viewer():
+    return Viewer()
+
 class Viewer:
 
     def __init__(self):
@@ -80,7 +83,7 @@ class Viewer:
         
         # Plot current 
         ax0 = axes.flat[0]
-        ax0.plot_date(t, i, '-')
+        ax0.plot_date(tt, ips, '-')
         ax0.plot_date(t[cycle_idx], i[cycle_idx], "x")
         ax0.plot_date(t[capacity_check_idx], i[capacity_check_idx], "*", c = "r")
         ax0.set_ylabel("Current [A]")
@@ -88,7 +91,7 @@ class Viewer:
 
         # Plot voltage 
         ax1 = axes.flat[1]
-        ax1.plot_date(t,v,'-')
+        ax1.plot_date(tt,vps,'-')
         ax1.plot_date(t[cycle_idx], v[cycle_idx], "x")
         ax1.plot_date(t[charge_idx], v[charge_idx], "o")
         ax1.plot_date(t[capacity_check_idx], v[capacity_check_idx], "*", c = "r")

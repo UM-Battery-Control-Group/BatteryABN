@@ -3,15 +3,15 @@ from flask import Blueprint, jsonify
 from flask_injector import inject
 from rq.job import Job
 from rq.registry import FinishedJobRegistry, FailedJobRegistry, StartedJobRegistry
-from batteryabn.services import TestRecordService, CellService, ProjectService
-from batteryabn.utils import Parser, Formatter, Processor, Viewer
-from batteryabn.extensions import task_queue, redis_conn
+from batteryabn.services import TestRecordService, CellService, ProjectService, create_project_service, create_cell_service, create_test_record_service
+from batteryabn.utils import Parser, Formatter, Processor, Viewer, create_parser, create_formatter, create_processor, create_viewer
+from batteryabn.tasks import task_queue, redis_conn
 
 tasks_bp = Blueprint('tasks', __name__)
 
 @inject 
 @tasks_bp.route('/trs/update/<cell_name>', methods=['POST'])
-def update_trs(cell_name: str, cell_service: CellService):
+def update_trs(cell_name: str, cell_service: CellService, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
     """
     Update test records for a cell by its name.
     """
@@ -26,12 +26,12 @@ def update_trs(cell_name: str, cell_service: CellService):
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
     
-    task_queue.enqueue(update_trs_task, data_directory, cell_name, False)
+    task_queue.enqueue(update_trs_task, data_directory, cell_name, False, test_record_service, parser, formatter)
     return jsonify({"message": "Test records update task enqueued."})
 
 @inject 
 @tasks_bp.route('/trs/reset/<cell_name>', methods=['POST'])
-def reset_trs(cell_name: str, cell_service: CellService):
+def reset_trs(cell_name: str, cell_service: CellService, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
     """
     Reset test records for a cell by its name.
     """
@@ -45,12 +45,12 @@ def reset_trs(cell_name: str, cell_service: CellService):
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
     
-    task_queue.enqueue(update_trs_task, data_directory, cell_name, True)
+    task_queue.enqueue(update_trs_task, data_directory, cell_name, True, test_record_service, parser, formatter)
     return jsonify({"message": "Test records update task enqueued."})
 
 @inject
 @tasks_bp.route('/cell/create/<cell_name>', methods=['POST'])
-def create_cell(cell_name: str):
+def create_cell(cell_name: str, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
     """
     Create a cell by its name.
     """
@@ -67,14 +67,14 @@ def create_cell(cell_name: str):
 
 @inject
 @tasks_bp.route('/cell/process/<cell_name>', methods=['POST'])
-def process_cell(cell_name: str, cell_service: CellService):
+def process_cell(cell_name: str, cell_service: CellService, processor: Processor, viewer: Viewer):
     """
     Process a cell by its name.
     """
     cell = cell_service.find_cell_by_name(cell_name)
     if not cell:
         return jsonify({"error": "Cell not found"}), 404
-    task_queue.enqueue(process_cell_task, cell_name)
+    task_queue.enqueue(process_cell_task, cell_name, cell_service, processor, viewer)
     return jsonify({"message": "Cell processing task enqueued."})
 
 
@@ -112,18 +112,23 @@ def get_all_tasks_status():
     return jsonify(result), 200
 
 
-@inject
-def process_cell_task(cell_name: str, cell_service: CellService, processor: Processor, viewer: Viewer):
+
+def process_cell_task(cell_name: str):
     """
     Function called by the task queue to process a cell by its name.
     """
+    cell_service = create_cell_service()
+    processor = create_processor()
+    viewer = create_viewer()
     cell_service.process_cell(cell_name, processor, viewer)
     return
 
-@inject
-def update_trs_task(data_directory: str, cell_name: str, reset: bool, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
+def update_trs_task(data_directory: str, cell_name: str, reset: bool):
     """
     Function called by the task queue to update test records for a cell by its name.
     """
+    test_record_service = create_test_record_service()
+    parser = create_parser()
+    formatter = create_formatter()
     test_record_service.create_and_save_trs(data_directory, cell_name, parser, formatter, reset)
     return

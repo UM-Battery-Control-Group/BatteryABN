@@ -1,1 +1,1 @@
-from .formatter import Formatter
+from .formatter import Formatter, create_formatter

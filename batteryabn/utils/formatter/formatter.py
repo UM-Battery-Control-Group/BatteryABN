@@ -6,6 +6,9 @@ from datetime import datetime
 from batteryabn import logger, Constants as Const
 from batteryabn.utils import Utils
 
+def create_formatter(timezone: str = None):
+    return Formatter(timezone)
+
 class Formatter:
     def __init__(self, timezone: str = None):
         """

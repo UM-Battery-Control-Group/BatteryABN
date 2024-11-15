@@ -9,6 +9,8 @@ from batteryabn.utils import Utils
 from batteryabn import logger, Constants as Const
 from batteryabn.models import TestRecord, Project
 
+def create_processor():
+    return Processor()
 
 class Processor:
 

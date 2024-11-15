@@ -5,6 +5,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from batteryabn import logger, Constants as Const
 
+def create_filesystem_repository():
+    return FileSystemRepository()
 
 class FileSystemRepository:
     def __init__(self):

@@ -3,7 +3,14 @@ from batteryabn import logger, Constants as Const
 from batteryabn.models import TestRecord, Cell, Project
 from batteryabn.utils import Parser, Formatter, Utils
 from batteryabn.repositories import CellRepository, TestRecordRepository, ProjectRepository
+from batteryabn.repositories import create_cell_repository, create_test_record_repository, create_project_repository
 
+
+def create_test_record_service():
+    cell_repository = create_cell_repository()
+    test_record_repository = create_test_record_repository()
+    project_repository = create_project_repository()
+    return TestRecordService(cell_repository, test_record_repository, project_repository)
 
 class TestRecordService:
     """
