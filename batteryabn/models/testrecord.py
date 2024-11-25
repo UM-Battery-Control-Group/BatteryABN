@@ -1,7 +1,7 @@
 import pandas as pd
 from batteryabn import Constants
 from batteryabn.utils import Utils
-from .base import db
+from ..extensions import db
 
 
 class TestRecord(db.Model):

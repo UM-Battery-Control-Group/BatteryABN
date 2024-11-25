@@ -451,7 +451,7 @@ class Utils:
         files = []
         for root, dirs, filenames in os.walk(base_path):
             for filename in filenames:
-                if not filename.startswith('~$') and keyword in filename and filename.split('.')[-1] in file_extensions:
+                if not filename.startswith('~$') and keyword.lower() in filename.lower() and filename.split('.')[-1] in file_extensions:
                     files.append(os.path.join(root, filename))
         return files
     

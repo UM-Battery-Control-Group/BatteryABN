@@ -1,8 +1,8 @@
 from batteryabn.models import Cell
 from .base_repository import BaseRepository
 
-def create_cell_repository():
-    return CellRepository()
+def create_cell_repository(session=None):
+    return CellRepository(session)
 
 class CellRepository(BaseRepository):
     """

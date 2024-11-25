@@ -1,10 +1,10 @@
-from batteryabn.models import db
+from batteryabn.extensions import db
 
 
 class BaseRepository:
 
-    def __init__(self):
-        self.session = db.session
+    def __init__(self, session=None):
+        self.session = db.session if session is None else session
 
     def add(self, instance):
         """Add a new instance to the session."""

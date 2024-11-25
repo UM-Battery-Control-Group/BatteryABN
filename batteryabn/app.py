@@ -7,7 +7,7 @@ from injector import singleton, Binder
 from batteryabn.repositories import ProjectRepository, CellRepository, TestRecordRepository, FileSystemRepository
 from batteryabn.services import ProjectService, CellService, TestRecordService
 from batteryabn.utils import Parser, Formatter, Processor, Viewer
-from batteryabn.models import db
+from batteryabn.extensions import db, rq
 from batteryabn.apis import projects_bp, cells_bp, trs_bp, tasks_bp
 
 def create_app():
@@ -18,7 +18,9 @@ def create_app():
     load_dotenv(dotenv_path='dev.env')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['RQ_REDIS_URL'] = os.getenv('REDIS_URL')
     db.init_app(app)
+    rq.init_app(app)
 
     # Register Blueprints
     app.register_blueprint(projects_bp, url_prefix='/api/projects')

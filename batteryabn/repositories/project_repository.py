@@ -1,8 +1,8 @@
 from batteryabn.models import Project
 from .base_repository import BaseRepository
 
-def create_project_repository():
-    return ProjectRepository()
+def create_project_repository(session=None):
+    return ProjectRepository(session)
 
 class ProjectRepository(BaseRepository):
     """

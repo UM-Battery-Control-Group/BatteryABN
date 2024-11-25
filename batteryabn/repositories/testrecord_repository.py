@@ -1,8 +1,8 @@
 from batteryabn.models import TestRecord
 from .base_repository import BaseRepository
 
-def create_test_record_repository():
-    return TestRecordRepository()
+def create_test_record_repository(session=None):
+    return TestRecordRepository(session)
 
 class TestRecordRepository(BaseRepository):
     """

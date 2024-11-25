@@ -1,5 +1,5 @@
 from batteryabn import Constants as Const
-from .base import db
+from ..extensions import db
 
 
 class Project(db.Model):

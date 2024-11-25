@@ -5,11 +5,10 @@ from batteryabn.repositories import CellRepository, TestRecordRepository, Projec
 from batteryabn.repositories import create_cell_repository, create_test_record_repository, create_project_repository, create_filesystem_repository
 from batteryabn.utils import Processor, Viewer, Utils
 
-
-def create_cell_service():
-    cell_repository = create_cell_repository()
-    test_record_repository = create_test_record_repository()
-    project_repository = create_project_repository()
+def create_cell_service(session=None):
+    cell_repository = create_cell_repository(session)
+    test_record_repository = create_test_record_repository(session)
+    project_repository = create_project_repository(session)
     filesystem_repository = create_filesystem_repository()
     return CellService(cell_repository, test_record_repository, project_repository, filesystem_repository)
 

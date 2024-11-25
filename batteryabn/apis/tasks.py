@@ -1,17 +1,15 @@
 import os
 from flask import Blueprint, jsonify
 from flask_injector import inject
-from rq.job import Job
-from rq.registry import FinishedJobRegistry, FailedJobRegistry, StartedJobRegistry
-from batteryabn.services import TestRecordService, CellService, ProjectService, create_project_service, create_cell_service, create_test_record_service
-from batteryabn.utils import Parser, Formatter, Processor, Viewer, create_parser, create_formatter, create_processor, create_viewer
-from batteryabn.tasks import task_queue, redis_conn
+from batteryabn.services import CellService
+from batteryabn.extensions import rq
+from batteryabn.tasks import process_cell_task, update_trs_task
 
 tasks_bp = Blueprint('tasks', __name__)
 
 @inject 
 @tasks_bp.route('/trs/update/<cell_name>', methods=['POST'])
-def update_trs(cell_name: str, cell_service: CellService, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
+def update_trs(cell_name: str, cell_service: CellService):
     """
     Update test records for a cell by its name.
     """
@@ -26,12 +24,12 @@ def update_trs(cell_name: str, cell_service: CellService, test_record_service: T
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
     
-    task_queue.enqueue(update_trs_task, data_directory, cell_name, False, test_record_service, parser, formatter)
+    update_trs_task.queue(data_directory, cell_name, False)
     return jsonify({"message": "Test records update task enqueued."})
 
 @inject 
 @tasks_bp.route('/trs/reset/<cell_name>', methods=['POST'])
-def reset_trs(cell_name: str, cell_service: CellService, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
+def reset_trs(cell_name: str, cell_service: CellService):
     """
     Reset test records for a cell by its name.
     """
@@ -45,12 +43,12 @@ def reset_trs(cell_name: str, cell_service: CellService, test_record_service: Te
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
     
-    task_queue.enqueue(update_trs_task, data_directory, cell_name, True, test_record_service, parser, formatter)
+    update_trs_task.queue(data_directory, cell_name, True)
     return jsonify({"message": "Test records update task enqueued."})
 
 @inject
 @tasks_bp.route('/cell/create/<cell_name>', methods=['POST'])
-def create_cell(cell_name: str, test_record_service: TestRecordService, parser: Parser, formatter: Formatter):
+def create_cell(cell_name: str):
     """
     Create a cell by its name.
     """
@@ -60,21 +58,21 @@ def create_cell(cell_name: str, test_record_service: TestRecordService, parser: 
     # Check if the path is correct
     if not os.path.exists(data_directory):
         return jsonify({"error": "Cell does not have data here"}), 404
-    
-    task_queue.enqueue(update_trs_task, data_directory, cell_name, True)
+
+    update_trs_task.queue(data_directory, cell_name, True)
     return jsonify({"message": "Test records update task enqueued."})
     
 
 @inject
 @tasks_bp.route('/cell/process/<cell_name>', methods=['POST'])
-def process_cell(cell_name: str, cell_service: CellService, processor: Processor, viewer: Viewer):
+def process_cell(cell_name: str, cell_service: CellService):
     """
     Process a cell by its name.
     """
     cell = cell_service.find_cell_by_name(cell_name)
     if not cell:
         return jsonify({"error": "Cell not found"}), 404
-    task_queue.enqueue(process_cell_task, cell_name, cell_service, processor, viewer)
+    process_cell_task.queue(cell_name)
     return jsonify({"message": "Cell processing task enqueued."})
 
 
@@ -84,51 +82,29 @@ def get_all_tasks_status():
     """
     Get the status of all tasks.
     """
-    queued_jobs = task_queue.jobs 
-
-    started_registry = StartedJobRegistry(queue=task_queue)
-    finished_registry = FinishedJobRegistry(queue=task_queue)
-    failed_registry = FailedJobRegistry(queue=task_queue)
-    
-    started_jobs = started_registry.get_job_ids()
-    finished_jobs = finished_registry.get_job_ids()
-    failed_jobs = failed_registry.get_job_ids()
-
+    queue = rq.get_queue()
+    started_registry = queue.started_job_registry
+    finished_registry = queue.finished_job_registry
+    failed_registry = queue.failed_job_registry
     def fetch_job_details(job_id):
-        job = Job.fetch(job_id, connection=redis_conn)
+        job = queue.fetch_job(job_id)
+        if job is None:
+            return {"id": job_id, "status": "unknown"}
         return {
             "id": job.id,
             "status": job.get_status(),
-            "enqueued_at": job.enqueued_at.strftime('%Y-%m-%d %H:%M:%S') if job.enqueued_at else None
+            "enqueued_at": job.enqueued_at.strftime('%Y-%m-%d %H:%M:%S') if job.enqueued_at else None,
+            "started_at": job.started_at.strftime('%Y-%m-%d %H:%M:%S') if job.started_at else None,
+            "ended_at": job.ended_at.strftime('%Y-%m-%d %H:%M:%S') if job.ended_at else None,
         }
-
     result = {
-        "queued": [{"id": job.id, "status": job.get_status(), "enqueued_at": job.enqueued_at.strftime('%Y-%m-%d %H:%M:%S')} for job in queued_jobs],
-        "started": [fetch_job_details(job_id) for job_id in started_jobs],
-        "finished": [fetch_job_details(job_id) for job_id in finished_jobs],
-        "failed": [fetch_job_details(job_id) for job_id in failed_jobs],
+        "queued": [
+            {"id": job.id, "status": job.get_status(), "enqueued_at": job.enqueued_at.strftime('%Y-%m-%d %H:%M:%S')}
+            for job in queue.jobs
+        ],
+        "started": [fetch_job_details(job_id) for job_id in started_registry.get_job_ids()],
+        "finished": [fetch_job_details(job_id) for job_id in finished_registry.get_job_ids()],
+        "failed": [fetch_job_details(job_id) for job_id in failed_registry.get_job_ids()],
     }
 
     return jsonify(result), 200
-
-
-
-def process_cell_task(cell_name: str):
-    """
-    Function called by the task queue to process a cell by its name.
-    """
-    cell_service = create_cell_service()
-    processor = create_processor()
-    viewer = create_viewer()
-    cell_service.process_cell(cell_name, processor, viewer)
-    return
-
-def update_trs_task(data_directory: str, cell_name: str, reset: bool):
-    """
-    Function called by the task queue to update test records for a cell by its name.
-    """
-    test_record_service = create_test_record_service()
-    parser = create_parser()
-    formatter = create_formatter()
-    test_record_service.create_and_save_trs(data_directory, cell_name, parser, formatter, reset)
-    return

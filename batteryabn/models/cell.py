@@ -1,5 +1,5 @@
 from batteryabn.utils import Utils
-from .base import db
+from ..extensions import db
 
 class Cell(db.Model):
     """

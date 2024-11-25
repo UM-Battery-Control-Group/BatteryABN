@@ -3,8 +3,8 @@ from batteryabn import logger
 from batteryabn.models import Project
 from batteryabn.repositories import ProjectRepository, create_project_repository
 
-def create_project_service():
-    project_repository = create_project_repository()
+def create_project_service(session=None):
+    project_repository = create_project_repository(session)
     return ProjectService(project_repository)
 
 class ProjectService:
