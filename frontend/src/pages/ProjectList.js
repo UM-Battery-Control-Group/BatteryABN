@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { List, ListItem, ListItemText, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { getProjects } from '../services/api';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);

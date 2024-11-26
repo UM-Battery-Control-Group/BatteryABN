@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, Button, List, ListItem, ListItemText, CircularProgress, Typography } from '@mui/material';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 import { getCellsByKeyword } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 

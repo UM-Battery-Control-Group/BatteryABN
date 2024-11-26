@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, CircularProgress, Card, CardMedia, Box, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCellImages } from '../services/api';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 
 const CellDetails = () => {
   const { cellName } = useParams();  

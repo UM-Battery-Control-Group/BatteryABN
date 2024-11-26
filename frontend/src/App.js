@@ -1,15 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ProjectList from './components/ProjectList';
-import CellList from './components/CellList';
-import CellDetails from './components/CellDetails';
-import CellImageDetail from './components/CellImageDetail';
-import CellSearch from './components/CellSearch';
-import TestRecordList from './components/TestRecordList';
-import TestRecordDetails from './components/TestRecordDetails';
-import TestRecordSearch from './components/TestRecordSearch';
-import TaskManager from './components/TaskManager';
-import TaskStatus from './components/TaskStatus';
+import ProjectList from './pages/ProjectList';
+import CellList from './pages/CellList';
+import CellDetails from './pages/CellDetails';
+import CellImageDetail from './pages/CellImageDetail';
+import CellSearch from './pages/CellSearch';
+import TestRecordList from './pages/TestRecordList';
+import TestRecordDetails from './pages/TestRecordDetails';
+import TestRecordSearch from './pages/TestRecordSearch';
+import TaskManager from './pages/TaskManager';
+import TaskStatus from './pages/TaskStatus';
 import './App.css';
 
 function App() {

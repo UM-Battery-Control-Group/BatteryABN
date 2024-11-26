@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CircularProgress, List, ListItem, ListItemText, Typography } from '@mui/material';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 import { getTasksStatus } from '../services/api';
 
 const TaskStatus = () => {

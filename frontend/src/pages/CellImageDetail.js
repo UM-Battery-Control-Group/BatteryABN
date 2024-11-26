@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CircularProgress, Box, Typography } from '@mui/material';
 import { getCellImageHtmls } from '../services/api';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 
 const CellImageDetail = () => {
   const { cellName, index } = useParams();  

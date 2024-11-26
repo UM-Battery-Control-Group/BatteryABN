@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { List, ListItem, ListItemText, CircularProgress, Typography } from '@mui/material';
+import { List, ListItem, ListItemText, CircularProgress } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
 import { getCellsByProject } from '../services/api';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 
 const CellList = () => {
   const { projectName } = useParams();  
