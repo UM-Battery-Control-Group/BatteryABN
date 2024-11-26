@@ -32,7 +32,7 @@ const Layout = ({ children, title }) => {
         {children}
       </Box>
 
-      <Box sx={{ backgroundColor: '#FFCB05', height: '10px', width: '100%' }}></Box>
+      <Box sx={{ backgroundColor: '#FFCB05', height: '3px', width: '100%' }}></Box>
 
       <FootBar />
     </>

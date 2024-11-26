@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Container, Link, Typography } from '@mui/material';
-import footLogo from '../logo-horizontal-hex.png';
+import umFootLogo from '../logo-horizontal-hex.png';
+import bclFootLogo from '../bcl-logo.png';
 
 const FootBar = () => {
   return (
@@ -13,21 +14,24 @@ const FootBar = () => {
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             gap: 4,
+            marginBottom: '20px',
           }}
         >
+          {/* Logo and Text Section */}
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
-              flex: '1 1 150px',
-              minWidth: '150px',
               flexDirection: 'column',
-              textAlign: 'center',
+              alignItems: 'center',
+              flex: '1 1 400px',
+              minWidth: '400px',
+              marginTop: '10px',
             }}
           >
+            {/* First logo */}
             <img
-              src={footLogo}
-              alt="Foot Logo"
+              src={umFootLogo}
+              alt="UM Foot Logo"
               style={{
                 transform: 'scale(2.5)',
                 marginBottom: '10px',
@@ -35,70 +39,100 @@ const FootBar = () => {
                 height: 'auto',
               }}
             />
-            <Typography variant="h6" sx={{ fontSize: '1.2rem' }}>
-              MECHANICAL ENGINEERING
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.875rem' }}>
-              Walter E. Lay Automotive Engineering Laboratory
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.875rem' }}>
-              1231 Beal Avenue
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.875rem' }}>
-              Ann Arbor MI 48109
-            </Typography>
+
+            {/* Second logo and text */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: '10px',
+              }}
+            >
+              {/* Second logo */}
+              <img
+                src={bclFootLogo}
+                alt="BCL Foot Logo"
+                style={{
+                  transform: 'scale(0.6)',
+                  width: '100px',
+                  height: 'auto',
+                  marginRight: '30px',
+                }}
+              />
+
+              {/* Text next to second logo */}
+              <Box sx={{marginRight: '50px',}}>
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  MECHANICAL ENGINEERING
+                </Typography>
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Battery Control Group
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
+                  Walter E. Lay Automotive Engineering Laboratory
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
+                  1231 Beal Avenue
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
+                  Ann Arbor MI 48109
+                </Typography>
+              </Box>
+            </Box>
           </Box>
 
-
-          <Box sx={{ flex: '1 1 200px', minWidth: '200px', paddingLeft: '200px' }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#00274C' }}>
+          {/* Menu Section */}
+          <Box sx={{ flex: '1 1 200px', minWidth: '200px', paddingLeft: '50px' }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#00274C', fontSize: '1rem' }}>
               MENU
             </Typography>
             <Box sx={{ marginY: 1 }}>
-              <Link href="/" color="inherit" underline="hover">
+              <Link href="/" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 Project Search
               </Link>
             </Box>
             <Box sx={{ marginY: 1 }}>
-              <Link href="/cells" color="inherit" underline="hover">
+              <Link href="/cells" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 Cell Search
               </Link>
             </Box>
             <Box sx={{ marginY: 1 }}>
-              <Link href="/trs" color="inherit" underline="hover">
+              <Link href="/trs" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 Test Record Search
               </Link>
             </Box>
             <Box sx={{ marginY: 1 }}>
-              <Link href="/tasks" color="inherit" underline="hover">
+              <Link href="/tasks" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 Task Manager
               </Link>
             </Box>
           </Box>
 
+          {/* More Links Section */}
           <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#00274C' }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#00274C', fontSize: '1rem' }}>
               MORE LINKS
             </Typography>
             <Box sx={{ marginY: 1 }}>
-              <Link href="https://www.umich.edu" color="inherit" underline="hover">
+              <Link href="https://www.umich.edu" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 U-M Home
               </Link>
             </Box>
             <Box sx={{ marginY: 1 }}>
-              <Link href="https://batterycontrolgroup.engin.umich.edu/home" color="inherit" underline="hover">
+              <Link href="https://batterycontrolgroup.engin.umich.edu/home" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 Battery Control Group Home
               </Link>
             </Box>
           </Box>
 
-
+          {/* Social Section */}
           <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#00274C' }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#00274C', fontSize: '1rem' }}>
               SOCIAL
             </Typography>
             <Box sx={{ marginY: 1 }}>
-              <Link href="https://www.linkedin.com" color="inherit" underline="hover">
+              <Link href="https://www.linkedin.com" color="inherit" underline="hover" sx={{ fontSize: '0.875rem' }}>
                 LinkedIn
               </Link>
             </Box>
@@ -115,7 +149,7 @@ const FootBar = () => {
         }}
       >
         <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
-          © 2024 UMBCL - All rights reserved.
+          © 2024 U-M Battery Control Group - All rights reserved.
         </Typography>
       </Box>
     </Box>

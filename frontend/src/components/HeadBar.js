@@ -6,6 +6,16 @@ import { ReactComponent as HeadLogo } from '../logo.svg';
 const HeadBar = () => {
   const location = useLocation();
 
+  const getButtonStyle = (path) => ({
+    color: location.pathname === path ? 'black' : 'white',
+    backgroundColor: location.pathname === path ? '#FFCB05' : 'transparent',
+    fontWeight: location.pathname === path ? 'bold' : 'normal',
+    borderRadius: '5px',
+    padding: '5px 15px',
+    textTransform: 'none',
+  });
+  
+
   return (
     <AppBar position="static" sx={{ backgroundColor: '#00274C', height: '65px' }}>
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -15,7 +25,7 @@ const HeadBar = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginLeft: '100px',
+            marginLeft: '80px',
             marginRight: '400px',
           }}
         >
@@ -38,55 +48,42 @@ const HeadBar = () => {
                 fontSize: '1.5rem',
               }}
             >
-              UMBCL Data Dashboard
+              BCL DATA DASHBOARD
             </Typography>
           </Link>
         </Box>
 
+        {/* Buttons */}
         <Button
-          color="inherit"
           component={Link}
           to="/"
-          sx={{
-            color: location.pathname === '/trs' ? '#f0f0f0' : 'white',
-            textTransform: 'none',
-          }}
+          sx={getButtonStyle('/')}
         >
-          Projects
+          PROJECTS
         </Button>
         <Button
-          color="inherit"
           component={Link}
           to="/cells"
-          sx={{
-            color: location.pathname === '/trs' ? '#f0f0f0' : 'white',
-            textTransform: 'none',
-          }}
+          sx={getButtonStyle('/cells')}
         >
-          Cells
+          CELLS
         </Button>
         <Button
-          color="inherit"
           component={Link}
           to="/trs"
-          sx={{
-            color: location.pathname === '/trs' ? '#f0f0f0' : 'white',
-            textTransform: 'none',
-          }}
+          sx={getButtonStyle('/trs')}
         >
-          TestRecords
+          TEST-RECORDS
         </Button>
         <Button
-          color="inherit"
           component={Link}
           to="/tasks"
-          sx={{
-            color: location.pathname === '/trs' ? '#f0f0f0' : 'white',
-            textTransform: 'none',
-            marginRight: '100px',
+          sx={{ 
+            ...getButtonStyle('/tasks'), 
+            marginRight: '100px'
           }}
         >
-          Tasks
+          TASKS
         </Button>
       </Toolbar>
     </AppBar>
