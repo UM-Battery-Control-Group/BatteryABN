@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { Box, Button, CircularProgress } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
 import { getCellsByProject } from '../services/api';
 import Layout from '../components/Layout';
@@ -23,22 +23,40 @@ const CellList = () => {
 
 
   return (
-    <Layout title={`Cells in Project: ${projectName}`}>
+    <Layout title={`CELLS`} subTitle={'Cell List'}>
       {loading ? (
         <CircularProgress />
       ) : (
-          <List>
-            {cells.map(cell => (
-              <ListItem 
-                button={true} 
-                component={Link} 
-                to={`/cell/${cell.cell_name}`} 
-                key={cell.cell_name}
-              >
-                <ListItemText primary={cell.cell_name} />
-              </ListItem>
-            ))}
-          </List>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            justifyContent: 'center',
+            margin: '1rem 0',
+          }}
+        >
+          {cells.map(cell => (
+            <Button
+              key={cell.cell_name}
+              component={Link}
+              to={`/cell/${cell.cell_name}`}
+              sx={{
+                backgroundColor: '#FFCB05',
+                color: '#00274C',
+                textTransform: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '5px',
+                ':hover': {
+                  backgroundColor: '#F9B500',
+                },
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {cell.cell_name}
+            </Button>
+          ))}
+        </Box>
       )}
     </Layout>
   );

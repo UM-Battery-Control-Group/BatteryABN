@@ -26,7 +26,7 @@ const CellImageDetail = () => {
   }, [cellName, index]);
 
   return (
-    <Layout title={`Interactive Plot for Cell: ${cellName}, Detail ${parseInt(index) + 1}`}>
+    <Layout title={`CELLS`} subTitle={'Cell Image'}>
       {loading ? (
         <CircularProgress />
       ) : (

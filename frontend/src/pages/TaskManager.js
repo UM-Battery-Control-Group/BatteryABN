@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Container } from '@mui/material';
+import { TextField, Button, Typography, Box} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { enqueueUpdateTask, enqueueResetTask, enqueueCreateTask, enqueueProcessTask } from '../services/api';
@@ -37,66 +37,139 @@ const TaskManager = () => {
   };
 
   return (
-    <Layout title="Task Management">
-      <Container sx={{ textAlign: 'center', marginTop: '2rem' }}>
-        <TextField
-          label="Cell Name"
-          variant="outlined"
-          value={cellName}
-          onChange={(e) => setCellName(e.target.value)}
-          fullWidth
-          sx={{ marginBottom: '1rem' }}
-        />
-        {error && <Typography color="error">{error}</Typography>}
-        {successMessage && <Typography color="success.main">{successMessage}</Typography>}
-        
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleTask('update')}
-          sx={{ marginRight: '1rem', marginBottom: '1rem' }}
+    <Layout title="TASKS" subTitle={'Task Manager'}>
+      <Box sx={{ padding: '2rem', minHeight: '60vh', backgroundColor: '#f5f5f5' }}>
+        {/* Search Box */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', marginBottom: '2rem' }}>
+          <TextField
+            label="Cell Name"
+            variant="outlined"
+            value={cellName}
+            onChange={(e) => setCellName(e.target.value)}
+            sx={{
+              marginBottom: '1rem',
+              width: '250px',
+              margin: '0.5rem',
+              backgroundColor: 'white',
+            }}
+          />
+          {error && <Typography color="error" sx={{ textAlign: 'center', marginTop: '1rem' }}>{error}</Typography>}
+          {successMessage && <Typography color="success.main" sx={{ textAlign: 'center', marginTop: '1rem' }}>{successMessage}</Typography>}
+        </Box>
+  
+        {/* Task Buttons Layout */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem', 
+            marginBottom: '0.5rem',
+            justifyContent: 'center'
+          }}
         >
-          Enqueue Update Task
-        </Button>
-
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => handleTask('reset')}
-          sx={{ marginRight: '1rem', marginBottom: '1rem' }}
-        >
-          Enqueue Reset Task
-        </Button>
-
-        <Button
-          variant="contained"
-          color="success"
-          onClick={() => handleTask('create')}
-          sx={{ marginBottom: '1rem' }}
-        >
-          Enqueue Create Task
-        </Button>
-
-        <Button
-          variant="contained"
-          color="info"
-          onClick={() => handleTask('process')}
-          sx={{ marginBottom: '1rem' }}
-        >
-          Enqueue Process Task
-        </Button>
-
-        <Button
-          variant="outlined"
-          color="info"
-          onClick={handleViewStatus}
-          sx={{ display: 'block', marginTop: '2rem' }}
-        >
-          View Task Status
-        </Button>
-      </Container>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleTask('update')}
+            sx={{
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              backgroundColor: '#FFCB05',
+              color: '#00274C',
+              textTransform: 'none',
+              ':hover': {
+                backgroundColor: '#F9B500',
+              },
+              marginBottom: '0.3rem',
+            }}
+          >
+            Update
+          </Button>
+  
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handleTask('reset')}
+            sx={{
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              backgroundColor: '#FFCB05',
+              color: '#00274C',
+              textTransform: 'none',
+              ':hover': {
+                backgroundColor: '#F9B500',
+              },
+              marginBottom: '0.3rem',
+            }}
+          >
+            Reset
+          </Button>
+  
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleTask('create')}
+            sx={{
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              backgroundColor: '#FFCB05',
+              color: '#00274C',
+              textTransform: 'none',
+              ':hover': {
+                backgroundColor: '#F9B500',
+              },
+              marginBottom: '0.3rem',
+            }}
+          >
+            Create
+          </Button>
+  
+          <Button
+            variant="contained"
+            color="info"
+            onClick={() => handleTask('process')}
+            sx={{
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              backgroundColor: '#FFCB05',
+              color: '#00274C',
+              textTransform: 'none',
+              ':hover': {
+                backgroundColor: '#F9B500',
+              },
+              marginBottom: '0.3rem',
+            }}
+          >
+            Process
+          </Button>
+        </Box>
+  
+        {/* View Task Status Button at the bottom */}
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant="outlined"
+            color="info"
+            onClick={handleViewStatus}
+            sx={{
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              backgroundColor: 'white',
+              color: '#00274C',
+              textTransform: 'none',
+              ':hover': {
+                backgroundColor: '#F9B500',
+              },
+              marginTop: '2rem',
+              width: 'auto',
+            }}
+          >
+            View Task Status
+          </Button>
+        </Box>
+      </Box>
     </Layout>
   );
+  
 };
 
 export default TaskManager;

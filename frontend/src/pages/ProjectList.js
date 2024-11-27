@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { Box, Button, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { getProjects } from '../services/api';
 import Layout from '../components/Layout';
@@ -22,23 +22,40 @@ const ProjectList = () => {
   }, []);
 
   return (
-    <Layout title="Projects">
+    <Layout title="PROJECTS" subTitle={'Project List'}>
       {loading ? (
         <CircularProgress />
       ) : (
-        <List>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            justifyContent: 'center',
+            margin: '1rem 0',
+          }}
+        >
           {projects.map((project) => (
-            <ListItem 
-              button 
-              component={Link} 
-              to={`/cells/${project.project_name}`} 
+            <Button
               key={project.project_name}
+              component={Link}
+              to={`/cells/${project.project_name}`}
+              sx={{
+                backgroundColor: '#FFCB05',
+                color: '#00274C',
+                textTransform: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '5px',
+                ':hover': {
+                  backgroundColor: '#F9B500',
+                },
+                whiteSpace: 'nowrap',
+              }}
             >
-              <ListItemText primary={project.project_name} />
-            </ListItem>
+              {project.project_name}
+            </Button>
           ))}
-        </List>
-
+        </Box>
       )}
     </Layout>
   );

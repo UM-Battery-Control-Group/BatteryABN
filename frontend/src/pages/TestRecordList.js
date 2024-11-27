@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { Box, Button, CircularProgress } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
 import { getTestRecordsByCell } from '../services/api';
 import Layout from '../components/Layout';
@@ -27,22 +27,40 @@ const TestRecordList = () => {
 
 
   return (
-    <Layout title={`Test Records for Cell: ${cellName}`}>
+    <Layout title="TESTRECORDS" subTitle={'TestRecord List'}>
       {loading ? (
         <CircularProgress />
       ) : (
-        <List>
-          {testRecords.map(record => (
-            <ListItem 
-              button={true}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            justifyContent: 'center',
+            margin: '1rem 0',
+          }}
+        >
+          {testRecords.map((record) => (
+            <Button
+              key={record.test_name}
               component={Link}
               to={`/tr/${record.test_name}`}
-              key={record.test_name}
+              sx={{
+                backgroundColor: '#FFCB05',
+                color: '#00274C',
+                textTransform: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '5px',
+                ':hover': {
+                  backgroundColor: '#F9B500',
+                },
+                whiteSpace: 'nowrap',
+              }}
             >
-              <ListItemText primary={record.test_name} />
-            </ListItem>
+              {record.test_name}
+            </Button>
           ))}
-        </List>
+        </Box>
       )}
     </Layout>
   );

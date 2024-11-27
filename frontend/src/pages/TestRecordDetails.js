@@ -22,7 +22,7 @@ const TestRecordDetails = () => {
   }, [trName]);
 
   return (
-    <Layout title="Test Record Details">
+    <Layout title="TESTRECORDS" subTitle={'TestRecord Detail'}>
       {loading ? (
         <CircularProgress />
       ) : testRecord ? (

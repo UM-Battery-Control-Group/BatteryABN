@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, CircularProgress, Card, CardMedia, Box, Button } from '@mui/material';
+import { CircularProgress, Card, CardMedia, Box, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCellImages } from '../services/api';
 import Layout from '../components/Layout';
@@ -32,25 +32,21 @@ const CellDetails = () => {
   };
 
   return (
-    <Layout title={`Details for Cell: ${cellName}`}>
+    <Layout title={`CELLS`} subTitle={`Cell Detail: ${cellName}`}>
       {loading ? (
         <CircularProgress />
       ) : (
         <>
-          <Typography variant="h5" gutterBottom>
-            Images for Cell: {cellName}
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '48px', marginTop: '30px' }}>
             {images.map((image, index) => (
               <Card key={index} sx={{ maxWidth: '100%' }}>
                 <CardMedia
                   component="img"
                   image={image}
                   alt={`Cell ${cellName} Image ${index + 1}`}
-                  sx={{ width: '100%', height: 'auto' }}
+                  sx={{ display: 'block', margin: '0 auto', width: '90%', height: 'auto', objectFit: 'contain', overflow: 'hidden',  }}
                 />
-                <Box sx={{ textAlign: 'center', marginTop: '1rem' }}>
+                <Box sx={{ textAlign: 'center', marginTop: '2rem', marginBottom: '2rem' }}>
                   <Button
                     variant="outlined"
                     color="primary"
@@ -66,6 +62,7 @@ const CellDetails = () => {
       )}
     </Layout>
   );
+  
 };
 
 export default CellDetails;
