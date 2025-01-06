@@ -19,6 +19,12 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['RQ_REDIS_URL'] = os.getenv('REDIS_URL')
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_size': 10,
+        'max_overflow': 20, 
+        'connect_args': {'options': '-c statement_timeout=600000'}
+    }
     db.init_app(app)
     rq.init_app(app)
 

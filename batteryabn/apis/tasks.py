@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify
 from flask_injector import inject
 from batteryabn.services import CellService
 from batteryabn.extensions import rq
-from batteryabn.tasks import process_cell_task, update_trs_task
+from batteryabn.tasks import process_cell_task, update_trs_task, clear_failed, clear_finished, clear_all, get_tasks_status
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -24,7 +24,7 @@ def update_trs(cell_name: str, cell_service: CellService):
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
     
-    update_trs_task.queue(data_directory, cell_name, False)
+    update_trs_task.queue(data_directory, cell_name, False, description=f"Update {cell_name}")
     return jsonify({"message": "Test records update task enqueued."})
 
 @inject 
@@ -43,7 +43,7 @@ def reset_trs(cell_name: str, cell_service: CellService):
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
     
-    update_trs_task.queue(data_directory, cell_name, True)
+    update_trs_task.queue(data_directory, cell_name, True, description=f"Reset {cell_name}")
     return jsonify({"message": "Test records update task enqueued."})
 
 @inject
@@ -59,7 +59,7 @@ def create_cell(cell_name: str):
     if not os.path.exists(data_directory):
         return jsonify({"error": "Cell does not have data here"}), 404
 
-    update_trs_task.queue(data_directory, cell_name, True)
+    update_trs_task.queue(data_directory, cell_name, True, description=f"Create {cell_name}")
     return jsonify({"message": "Test records update task enqueued."})
     
 
@@ -72,9 +72,8 @@ def process_cell(cell_name: str, cell_service: CellService):
     cell = cell_service.find_cell_by_name(cell_name)
     if not cell:
         return jsonify({"error": "Cell not found"}), 404
-    process_cell_task.queue(cell_name)
+    process_cell_task.queue(cell_name, description=f"Process {cell_name}")
     return jsonify({"message": "Cell processing task enqueued."})
-
 
 @inject
 @tasks_bp.route('/status', methods=['GET'])
@@ -82,29 +81,31 @@ def get_all_tasks_status():
     """
     Get the status of all tasks.
     """
-    queue = rq.get_queue()
-    started_registry = queue.started_job_registry
-    finished_registry = queue.finished_job_registry
-    failed_registry = queue.failed_job_registry
-    def fetch_job_details(job_id):
-        job = queue.fetch_job(job_id)
-        if job is None:
-            return {"id": job_id, "status": "unknown"}
-        return {
-            "id": job.id,
-            "status": job.get_status(),
-            "enqueued_at": job.enqueued_at.strftime('%Y-%m-%d %H:%M:%S') if job.enqueued_at else None,
-            "started_at": job.started_at.strftime('%Y-%m-%d %H:%M:%S') if job.started_at else None,
-            "ended_at": job.ended_at.strftime('%Y-%m-%d %H:%M:%S') if job.ended_at else None,
-        }
-    result = {
-        "queued": [
-            {"id": job.id, "status": job.get_status(), "enqueued_at": job.enqueued_at.strftime('%Y-%m-%d %H:%M:%S')}
-            for job in queue.jobs
-        ],
-        "started": [fetch_job_details(job_id) for job_id in started_registry.get_job_ids()],
-        "finished": [fetch_job_details(job_id) for job_id in finished_registry.get_job_ids()],
-        "failed": [fetch_job_details(job_id) for job_id in failed_registry.get_job_ids()],
-    }
+    result = get_tasks_status()
+    return jsonify(result), 200
 
+
+@tasks_bp.route('/clear', methods=['POST'])
+def clear_all_tasks():
+    """
+    Clear all tasks.
+    """
+    clear_all()
+    return jsonify({"message": "All tasks cleared."}), 200
+
+@tasks_bp.route('/clear/finished', methods=['POST'])
+def clear_finished_tasks():
+    """
+    Clear finished tasks.
+    """
+    result = clear_finished()
+    return jsonify(result), 200
+
+
+@tasks_bp.route('/clear/failed', methods=['POST'])
+def clear_failed_tasks():
+    """
+    Clear failed tasks.
+    """
+    result = clear_failed()
     return jsonify(result), 200
