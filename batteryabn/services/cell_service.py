@@ -75,6 +75,7 @@ class CellService:
             return
         
         cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
+        print(f"Lenght of cycler_trs: {len(cycler_trs)}, Lenght of vdf_trs: {len(vdf_trs)}")
         # Process cell data
         processor.process(cycler_trs, vdf_trs, cell.project)
         if processor.cell_data.empty:
@@ -102,11 +103,11 @@ class CellService:
         #     raise e
         
         # Save data to local file
-        # self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
-        # self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_rpt', processor.cell_data_rpt)
+        self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_rpt', processor.cell_data_rpt)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'cell', img_cell)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm', img_ccm)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht)    

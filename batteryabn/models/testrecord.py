@@ -33,6 +33,7 @@ class TestRecord(db.Model):
     test_metadata = db.Column(db.LargeBinary)
     start_time = db.Column(db.BIGINT, nullable=True)  # Unix timestamp
     last_update_time = db.Column(db.BIGINT)  # Unix timestamp
+    size = db.Column(db.Integer, nullable=True)  # Size of the test data in bytes
     # Relationship with the Cell model
     cell = db.relationship("Cell", back_populates="test_records")
 

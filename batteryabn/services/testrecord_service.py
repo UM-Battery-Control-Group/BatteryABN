@@ -40,19 +40,41 @@ class TestRecordService:
         """
         logger.info(f'Creating new test record from file: {path}')
         parser.parse(path)
-        formatter.format_data(parser.raw_test_data, parser.raw_metadata, parser.test_type)
 
         test_name = parser.test_name
         test_record = self.test_record_repository.find_by_name(test_name)
 
-        # If test record exists and is up-to-date, no action needed
-        # TODO: Size check
-        if not reset and test_record and \
-        test_record.last_update_time is not None and \
-        formatter.last_update_time is not None and \
-        test_record.last_update_time >= formatter.last_update_time:
-            logger.info(f'Test record already exists and is up-to-date: {test_name}')
-            return
+        # Check if the test record exists and size is up-to-date
+        if not reset and test_record:
+            size_is_valid = (
+                test_record.size is not None and
+                parser.test_size is not None and
+                test_record.size >= parser.test_size
+            )
+            if size_is_valid:
+                logger.info(f'Test record already exists and size is up-to-date: {test_name}')
+                return
+
+        # Process the data (formatter needs to run before checking time)
+        formatter.format_data(parser.raw_test_data, parser.raw_metadata, parser.test_type)
+
+        # Check if the test record's last update time is up-to-date
+        if not reset and test_record:
+            time_is_valid = (
+                test_record.last_update_time is not None and
+                formatter.last_update_time is not None and
+                test_record.last_update_time >= formatter.last_update_time
+            )
+            if time_is_valid:
+                logger.info(f'Test record already exists and is up-to-date: {test_name}')
+                return
+
+        # Check if cell exists, if not create it
+        cell = self.cell_repository.find_by_name(formatter.cell_name)
+        if not cell:
+            logger.info(f'Creating new cell: {formatter.cell_name}')
+            cell = Cell(cell_name=formatter.cell_name)
+            self.cell_repository.add(cell)
 
         # Create or update the test record
         if not test_record:
@@ -61,17 +83,11 @@ class TestRecordService:
 
         # Load data from parser and formatter
         test_record.test_type = parser.test_type
+        test_record.size = parser.test_size
         test_record.cell_name = formatter.cell_name
         test_record.test_data = Utils.gzip_pikle_dump(formatter.test_data)
         test_record.test_metadata = Utils.gzip_pikle_dump(formatter.metadata)
         test_record.last_update_time = formatter.last_update_time
-
-        # Check if cell exists, if not create it
-        cell = self.cell_repository.find_by_name(formatter.cell_name)
-        if not cell:
-            logger.info(f'Creating new cell: {formatter.cell_name}')
-            cell = Cell(cell_name=formatter.cell_name)
-            self.cell_repository.add(cell)
         test_record.cell = cell
         logger.info(f'Saving test record: {test_name}')
 

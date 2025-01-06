@@ -18,6 +18,7 @@ class Parser:
         """
         self.test_name = None
         self.test_type = None
+        self.test_size = None
         self.raw_test_data = pd.DataFrame(dtype=object)
         self.raw_metadata = {}
         self.calibration_parameters = {}
@@ -52,6 +53,9 @@ class Parser:
 
         # Determine test type
         self.test_type = self.__determine_test_type(file_path)
+
+        # Get the size of the test data
+        self.test_size = self.__get_test_size(file_path)
         
         # Parse metadata from test name
         self.parse_metadata(self.test_name, self.test_type)
@@ -268,6 +272,28 @@ class Parser:
         
         return test_type
     
+    def __get_test_size(self, file_path: str) -> int:
+        """
+        Get the size of the test data.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the test data file
+
+        Returns
+        -------
+        int
+            The size of the test data
+        """
+        try:
+            # Get the size of the test data
+            test_size = os.path.getsize(file_path)
+            logger.info(f"Test data size: {test_size} bytes")
+            return test_size
+        except:
+            raise ValueError(f"Failed to get the size of the test data from {file_path}")
+
     def __load_xlsx(self, file_path: str, sheet: str = 'record') -> pd.DataFrame:
         """
         Read the xlsx file, get the sheet and return the raw data
