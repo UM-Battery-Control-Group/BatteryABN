@@ -5,7 +5,10 @@ class Constants:
 
 #------------------------------------Paths:------------------------------------------#
     #TODO: The root directory should be set in the configuration file in the future
-    ROOT_DIRECTORY = '/home/me-bcl/Lab_share_Volt/Processed'
+    ROOT_DIRECTORY = '/home/me-bcl/Lab_share_Volt'
+    PROCESSED_DIRECTORY = '/home/me-bcl/Lab_share_Volt/Processed'
+    PROJECT_PREFIX = 'PROJ_'
+    DATA_DIRECTORY = '/home/me-bcl/Lab_share_Volt/PROJ_{project_name}/Cycler_Data_By_Cell/{cell_name}'
         
 #------------------------------------Strings:------------------------------------------#
     ARBIN = 'Arbin'

@@ -23,3 +23,18 @@ def get_project(project_name, project_service: ProjectService):
     if project:
         return jsonify(project.to_dict())
     return jsonify({"error": "Project not found"}), 404
+
+@inject
+@projects_bp.route('/unlisted', methods=['GET'])
+def get_unlisted_projects(project_service: ProjectService):
+    """
+    Get all unlisted projects.
+    """
+    projects_name_in_filesystem = project_service.get_projects_in_filesystem()
+    projects = project_service.get_all_projects()
+    projects_name = [project.project_name for project in projects]
+    unlisted_projects = []
+    for project in projects_name_in_filesystem:
+        if project not in projects_name:
+            unlisted_projects.append(project)
+    return jsonify(unlisted_projects)

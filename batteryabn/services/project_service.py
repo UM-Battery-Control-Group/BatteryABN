@@ -1,19 +1,21 @@
 from flask_injector import inject
 from batteryabn import logger
 from batteryabn.models import Project
-from batteryabn.repositories import ProjectRepository, create_project_repository
+from batteryabn.repositories import ProjectRepository, FileSystemRepository, create_project_repository, create_filesystem_repository
 
 def create_project_service(session=None):
     project_repository = create_project_repository(session)
-    return ProjectService(project_repository)
+    filesystem_repository = create_filesystem_repository()
+    return ProjectService(project_repository, filesystem_repository)
 
 class ProjectService:
     """
     The ProjectService class provides an interface for creating and querying Project objects.
     """
     @inject
-    def __init__(self, project_repository: ProjectRepository):
+    def __init__(self, project_repository: ProjectRepository, file_system_repository: FileSystemRepository):
         self.project_repository = project_repository
+        self.file_system_repository = file_system_repository
 
     def create_project(self, project_name: str) -> Project:
         """
@@ -73,3 +75,14 @@ class ProjectService:
             A list of all projects
         """
         return self.project_repository.get_all_projects()
+    
+    def get_projects_in_filesystem(self):
+        """
+        This method returns all projects in the filesystem.
+
+        Returns
+        -------
+        List[str]
+            A list of all projects in the filesystem
+        """
+        return self.file_system_repository.get_projects_in_filesystem()

@@ -10,7 +10,7 @@ def create_filesystem_repository():
 
 class FileSystemRepository:
     def __init__(self):
-        self.root_directory = Const.ROOT_DIRECTORY
+        self.root_directory = Const.PROCESSED_DIRECTORY
 
     def save_to_local_pklgz(self, project: str, cell_name: str, data_name: str, data: pd.DataFrame):
         """
@@ -197,3 +197,19 @@ class FileSystemRepository:
         """
         cell_dir = self.get_cell_dir(project, cell_name)
         return os.path.join(cell_dir, f'{cell_name}_cell.html'), os.path.join(cell_dir, f'{cell_name}_ccm.html'), os.path.join(cell_dir, f'{cell_name}_ccm_aht.html')
+    
+    def get_projects_in_filesystem(self):
+        """
+        Get the projects in the filesystem, with the prefix removed.
+
+        Returns
+        -------
+        List[str]
+            The projects in the filesystem (without the prefix)
+        """
+        projects = [
+            entry.removeprefix(Const.PROJECT_PREFIX).upper()  # Remove the prefix
+            for entry in os.listdir(Const.ROOT_DIRECTORY)
+            if entry.startswith(Const.PROJECT_PREFIX) and os.path.isdir(os.path.join(Const.ROOT_DIRECTORY, entry))
+        ]
+        return projects

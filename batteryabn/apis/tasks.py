@@ -2,8 +2,8 @@ import os
 from flask import Blueprint, jsonify
 from flask_injector import inject
 from batteryabn.services import CellService
-from batteryabn.extensions import rq
 from batteryabn.tasks import process_cell_task, update_trs_task, clear_failed, clear_finished, clear_all, get_tasks_status
+from batteryabn import Constants as Const 
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -17,9 +17,7 @@ def update_trs(cell_name: str, cell_service: CellService):
     if not cell:
         return jsonify({"error": "Cell not found"}), 404
     project_name = cell.project_name
-
-    # TODO: Path should be hidden in the configuration file. Path should not be passed as an argument.
-    data_directory = f'/home/me-bcl/Lab_share_Volt/PROJ_{project_name}/Cycler_Data_By_Cell/{cell_name}'
+    data_directory = Const.DATA_DIRECTORY.format(project_name, cell_name)
     # Check if the path is correct
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
@@ -37,8 +35,7 @@ def reset_trs(cell_name: str, cell_service: CellService):
     if not cell:
         return jsonify({"error": "Cell not found"}), 404
     project_name = cell.project_name
-    # TODO: Path should be hidden in the configuration file. Path should not be passed as an argument.
-    data_directory = f'/home/me-bcl/Lab_share_Volt/PROJ_{project_name}/Cycler_Data_By_Cell/{cell_name}'
+    data_directory = Const.DATA_DIRECTORY.format(project_name, cell_name)
     # Check if the path is correct
     if not os.path.exists(data_directory):
         return jsonify({"error": "Data directory not found"}), 404
@@ -53,8 +50,7 @@ def create_cell(cell_name: str):
     Create a cell by its name.
     """
     project_name = cell_name.split('_')[0]
-    # TODO: Path should be hidden in the configuration file. Path should not be passed as an argument.
-    data_directory = f'/home/me-bcl/Lab_share_Volt/PROJ_{project_name}/Cycler_Data_By_Cell/{cell_name}'
+    data_directory = Const.DATA_DIRECTORY.format(project_name, cell_name)
     # Check if the path is correct
     if not os.path.exists(data_directory):
         return jsonify({"error": "Cell does not have data here"}), 404
