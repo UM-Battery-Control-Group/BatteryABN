@@ -207,9 +207,14 @@ class FileSystemRepository:
         List[str]
             The projects in the filesystem (without the prefix)
         """
-        projects = [
-            entry.removeprefix(Const.PROJECT_PREFIX).upper()  # Remove the prefix
-            for entry in os.listdir(Const.ROOT_DIRECTORY)
-            if entry.startswith(Const.PROJECT_PREFIX) and os.path.isdir(os.path.join(Const.ROOT_DIRECTORY, entry))
-        ]
+        projects = []
+        for entry in os.listdir(Const.ROOT_DIRECTORY):
+            project_path = os.path.join(Const.ROOT_DIRECTORY, entry)
+            # Check if the directory starts with the prefix and is a directory
+            if entry.startswith(Const.PROJECT_PREFIX) and os.path.isdir(project_path):
+                # Check if the required subdirectory exists
+                required_data_path = os.path.join(project_path, Const.DATA_FOLDER)
+                if os.path.exists(required_data_path) and os.path.isdir(required_data_path):
+                    # Remove the prefix and convert to uppercase
+                    projects.append(entry[len(Const.PROJECT_PREFIX):].upper())
         return projects

@@ -27,7 +27,7 @@ def process_cell_task(cell_name: str):
     return
 
 @rq.job(timeout=60 * 60)
-def update_trs_task(data_directory: str, cell_name: str, reset: bool):
+def update_trs_task(data_directory: str, key_word: str, reset: bool):
     """
     Function called by the task queue to update test records for a cell by its name.
     """
@@ -39,7 +39,7 @@ def update_trs_task(data_directory: str, cell_name: str, reset: bool):
                 test_record_service = create_test_record_service(session=session)
                 parser = create_parser()
                 formatter = create_formatter()
-                test_record_service.create_and_save_trs(data_directory, cell_name, parser, formatter, reset=reset)
+                test_record_service.create_and_save_trs(data_directory, key_word, parser, formatter, reset=reset)
                 session.commit()
             except Exception as e:
                 session.rollback()

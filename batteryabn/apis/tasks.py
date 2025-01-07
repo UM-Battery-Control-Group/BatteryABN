@@ -58,6 +58,20 @@ def create_cell(cell_name: str):
     update_trs_task.queue(data_directory, cell_name, True, description=f"Create {cell_name}")
     return jsonify({"message": "Test records update task enqueued."})
     
+@inject
+@tasks_bp.route('/project/update/<project_name>', methods=['POST'])
+def update_project(project_name: str):
+    """
+    Create a project by its name.
+    """
+    data_directory = Const.DATA_DIRECTORY.format(project_name=project_name, cell_name="")
+    # Check if the path is correct
+    if not os.path.exists(data_directory):
+        return jsonify({"error": "Project does not have data here"}), 404
+
+    update_trs_task.queue(data_directory, project_name, False, description=f"Update Project: {project_name}")
+    return jsonify({"message": "Test records update task enqueued."})
+
 
 @inject
 @tasks_bp.route('/cell/process/<cell_name>', methods=['POST'])

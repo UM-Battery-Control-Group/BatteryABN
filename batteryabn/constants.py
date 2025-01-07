@@ -8,6 +8,7 @@ class Constants:
     ROOT_DIRECTORY = '/home/me-bcl/Lab_share_Volt'
     PROCESSED_DIRECTORY = '/home/me-bcl/Lab_share_Volt/Processed'
     PROJECT_PREFIX = 'PROJ_'
+    DATA_FOLDER = 'Cycler_Data_By_Cell'
     DATA_DIRECTORY = '/home/me-bcl/Lab_share_Volt/PROJ_{project_name}/Cycler_Data_By_Cell/{cell_name}'
         
 #------------------------------------Strings:------------------------------------------#
