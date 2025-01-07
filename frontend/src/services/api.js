@@ -4,6 +4,7 @@ const API_URL = 'http://127.0.0.1:5000/api';
 
 export const getProjects = () => axios.get(`${API_URL}/projects/`);
 export const getProject = (name) => axios.get(`${API_URL}/projects/${name}`);
+export const getUnlistedProjects = () => axios.get(`${API_URL}/projects/unlisted`);
 
 export const getCellsByProject = (name) => axios.get(`${API_URL}/cells/project/${name}`);
 export const getCellByName = (name) => axios.get(`${API_URL}/cells/${name}`);
@@ -31,3 +32,7 @@ export const enqueueUpdateTask = (cellName) => axios.post(`${API_URL}/tasks/trs/
 export const enqueueResetTask = (cellName) => axios.post(`${API_URL}/tasks/trs/reset/${cellName}`);
 export const enqueueCreateTask = (cellName) => axios.post(`${API_URL}/tasks/cell/create/${cellName}`);
 export const enqueueProcessTask = (cellName) => axios.post(`${API_URL}/tasks/cell/process/${cellName}`);
+export const enqueueUpdateProjectTask = (projectName) => axios.post(`${API_URL}/tasks/project/update/${projectName}`);
+export const clearAllTasks = () => axios.post(`${API_URL}/tasks/clear`);
+export const clearFinishedTasks = () => axios.post(`${API_URL}/tasks/clear/finished`);
+export const clearFailedTasks = () => axios.post(`${API_URL}/tasks/clear/failed`);
