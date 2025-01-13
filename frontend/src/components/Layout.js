@@ -76,20 +76,31 @@ const Layout = ({ children, title, subTitle, onActionClick = null, actionButtonL
                 backgroundColor: '#f9f9f9',
                 borderLeft: '4px solid #FFCB05',
                 borderRadius: '5px',
+                width: '90%',
               }}
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  fontFamily: "'Roboto', sans-serif",
-                  fontSize: '0.875rem',
-                  color: '#333333',
-                }}
-              >
-                {description}
-              </Typography>
+              {description.split('\n').map((line, index) => (
+                <Typography
+                  key={index}
+                  variant="body2"
+                  sx={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontSize: '0.875rem',
+                    color: '#333333',
+                    marginBottom: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                  }}
+                  title={line}
+                >
+                  {line}
+                </Typography>
+              ))}
             </Box>
           )}
+
         </Box>
 
         {/* Right Content Section */}

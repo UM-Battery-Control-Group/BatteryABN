@@ -21,7 +21,7 @@ export const getCellImageHtmls = async (name, index) => {
     });
     return URL.createObjectURL(response.data);
   };
-
+export const getCellLatestCellInfo = (name) => axios.get(`${API_URL}/cells/${name}/info/latest`);
 
 export const getTestRecordsByCell = (name) => axios.get(`${API_URL}/trs/cell/${name}`);
 export const getTestRecordByName = (name) => axios.get(`${API_URL}/trs/${name}`);

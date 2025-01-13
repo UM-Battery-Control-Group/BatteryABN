@@ -65,6 +65,29 @@ def search_cells(keyword: str, cell_service: CellService):
         return jsonify({"error": "No cells found"}), 404
     return jsonify([cell.to_dict() for cell in cells])
 
+@inject
+@cells_bp.route('/<cell_name>/trs/latest', methods=['GET'])
+def get_latest_tr(cell_name: str, cell_service: CellService):
+    """
+    Get the latest test record for a cell.
+    """
+    test_record = cell_service.get_latest_test_record(cell_name)
+    if test_record is None:
+        return jsonify({"error": "Test record not found"}), 404
+    return jsonify(test_record.to_dict())
+
+@inject
+@cells_bp.route('/<cell_name>/info/latest', methods=['GET'])
+def get_latest_info(cell_name: str, cell_service: CellService):
+    """
+    Get the latest info for a cell.
+    """
+    rpt_info = cell_service.get_latest_cell_info(cell_name)
+    if rpt_info is None:
+        return jsonify({"error": "Rpt info not found"}), 404
+    return jsonify(rpt_info)
+
+
 # TODO: Currently, the size of the binary data is too large to be returned as a response.
 #       In the future, could use timescaledb to store the test data and return the data in chunks(separate by time).
 

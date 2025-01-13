@@ -75,7 +75,6 @@ class CellService:
             return
         
         cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
-        print(f"Lenght of cycler_trs: {len(cycler_trs)}, Lenght of vdf_trs: {len(vdf_trs)}")
         # Process cell data
         processor.process(cycler_trs, vdf_trs, cell.project)
         if processor.cell_data.empty:
@@ -436,5 +435,58 @@ class CellService:
         project = cell.project
         return self.filesystem_repository.get_cell_htmls_paths(project.project_name, cell_name)
 
+    def get_latest_test_record(self, cell_name: str):
+        """
+        Get the latest test record for a cell.
 
+        Parameters
+        ----------
+        cell_name : str
+            The name of the cell
+        test_type : str
+            The type of test record to get
+
+        Returns
+        -------
+        TestRecord
+            The latest test record
+        """
+        trs = self.test_record_repository.find_by_cell_name(cell_name)
+        latest_tr = None
+        for tr in trs:
+            if tr.test_type != Const.VDF and (latest_tr is None or tr.last_update_time > latest_tr.last_update_time):
+                latest_tr = tr
+        return latest_tr
     
+    def get_latest_cell_info(self, cell_name: str):
+        """
+        Get the latest report info for a cell.
+
+        Parameters
+        ----------
+        cell_name : str
+            The name of the cell
+
+        Returns
+        -------
+        dict
+            The latest report info
+        """
+
+        cell_data_rpt = self.get_data(cell_name, 'cell_data_rpt')
+        if cell_data_rpt is None:
+            return None
+        # Get the last row of the data
+        rpt_last_row = cell_data_rpt.iloc[-1]
+        tr_name = rpt_last_row[Const.TEST_NAME]
+        data_last_row = rpt_last_row[Const.DATA].iloc[-1]
+
+        ccm = self.get_data(cell_name, 'cell_cycle_metrics')
+        if ccm is None:
+            return {"latest_test_name": tr_name, "timestamp": data_last_row[Const.TIMESTAMP], "capacity": data_last_row[Const.AHT]}
+        
+        # Get the last row of the cell cycle metrics
+        ccm_last_row = ccm.iloc[-1]
+
+        return {"latest_test_name": tr_name, "timestamp": data_last_row[Const.TIMESTAMP], "capacity": data_last_row[Const.AHT],
+                "protocol": ccm_last_row[Const.PROTOCOL], "cycle_type": ccm_last_row[Const.CYCLE_TYPE]}
