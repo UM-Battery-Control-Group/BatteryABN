@@ -2,6 +2,7 @@ import os
 import re
 import csv
 import cellpy
+import shutil
 import pandas as pd
 from galvani import BioLogic
 
@@ -433,12 +434,22 @@ class Parser:
         """
         try:
             # Use cellpy to read the file and convert it to a list of rows
-            cell = cellpy.cellreader.get(file_path, instrument="arbin_res")
+            temp_dir = "/home/me-bcl/BatteryABN/tmp/cellpy_temp"
+            # Create a temporary directory if it does not exist
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dir)
+            temp_file_path = os.path.join(temp_dir, os.path.basename(file_path))
+            cellpy.prms.Instruments.Arbin['max_res_filesize'] = 1000000000
+            # Copy the file to the temp directory
+            shutil.copy(file_path, temp_file_path)
+            cell = cellpy.cellreader.get(temp_file_path, instrument="arbin_res")
             data = cell.data
             raw_data = data.raw
             summary_data = data.summary
             steps_data = data.steps
             logger.info(f"Loaded cellpy file from {file_path} successfully")
+            # Delete the temp file
+            os.remove(temp_file_path)
 
             return raw_data, summary_data, steps_data
             
