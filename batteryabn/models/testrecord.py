@@ -25,7 +25,7 @@ class TestRecord(db.Model):
     __tablename__ = 'testrecords'
 
     id = db.Column(db.Integer, primary_key=True)
-    test_name = db.Column(db.String, unique=True)
+    test_name = db.Column(db.String)
     test_type = db.Column(db.String)
     cell_name = db.Column(db.String, db.ForeignKey('cells.cell_name'))
     # Store test data as pickled object

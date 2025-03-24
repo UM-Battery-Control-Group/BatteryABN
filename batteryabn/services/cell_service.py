@@ -114,6 +114,25 @@ class CellService:
         self.filesystem_repository.save_html(project.project_name, cell.cell_name, 'ccm', img_ccm_html)
         self.filesystem_repository.save_html(project.project_name, cell.cell_name, 'ccm_aht', img_ccm_aht_html)
 
+    def process_cells_for_project(self, project_name: str, processor: Processor, viewer: Viewer):
+        """
+        Process cells for a project.
+
+        Parameters
+        ----------
+        project_name : str
+            The name of the project to process cells for
+        processor : Processor
+            Processor object with processed cell data
+        """
+        cells = self.find_cells_by_project_name(project_name)
+        if not cells:
+            logger.error(f'No cells found for project: {project_name}')
+            return
+        
+        for cell in cells:
+            self.process_cell(cell.cell_name, processor, viewer)
+
     def generate_cell_images_by_processed_data(self, cell_name: str, viewer: Viewer):
         """
         Generate images for a cell based on processed data.
@@ -308,9 +327,9 @@ class CellService:
         trs = self.test_record_repository.find_by_cell_name(cell.cell_name)
         cycler_trs, vdf_trs = {}, {}
         for tr in trs:
-            if tr.last_update_time is None:
-                #TODO: Maybe check more details if the test record contains data
-                continue
+            # if tr.last_update_time is None:
+            #     #TODO: Maybe check more details if the test record contains data
+            #     continue
             if tr.test_type == Const.VDF:
                 vdf_trs[tr.test_name] = tr
             else:

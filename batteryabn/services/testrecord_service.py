@@ -42,7 +42,8 @@ class TestRecordService:
         parser.parse(path)
 
         test_name = parser.test_name
-        test_record = self.test_record_repository.find_by_name(test_name)
+        test_type = parser.test_type
+        test_record = self.test_record_repository.find_by_name(test_name, test_type)
 
         # Check if the test record exists and size is up-to-date
         if not reset and test_record:
@@ -78,11 +79,10 @@ class TestRecordService:
 
         # Create or update the test record
         if not test_record:
-            test_record = TestRecord(test_name=test_name)
+            test_record = TestRecord(test_name=test_name, test_type=test_type)
             self.test_record_repository.add(test_record)
 
         # Load data from parser and formatter
-        test_record.test_type = parser.test_type
         test_record.size = parser.test_size
         test_record.cell_name = formatter.cell_name
         test_record.test_data = Utils.gzip_pikle_dump(formatter.test_data)
@@ -135,25 +135,7 @@ class TestRecordService:
         for file in files:
             self.create_and_save_tr(file, parser, formatter, reset)
 
-    def delete_test_record(self, test_name: str):
-        """
-        This method deletes a TestRecord from the database.
-
-        Parameters
-        ----------
-        test_name : str
-            The name of the test record to delete
-        """
-        test_record = self.test_record_repository.find_by_name(test_name)
-        if test_record:
-            self.test_record_repository.delete(test_record)
-            self.test_record_repository.commit()
-            logger.info(f'Deleted test record: {test_name}')
-        else:
-            logger.info(f'Test record not found: {test_name}')
-        
-
-    def find_test_record_by_name(self, test_name: str):
+    def find_test_record_by_name(self, test_name: str, test_type: str):
         """
         This method finds a TestRecord by its name.
 
@@ -161,13 +143,15 @@ class TestRecordService:
         ----------
         test_name : str
             The name of the test record to find
+        test_type : str
+            The type of the test record to find
 
         Returns
         -------
         TestRecord
             The TestRecord object with the specified name
         """
-        return self.test_record_repository.find_by_name(test_name)
+        return self.test_record_repository.find_by_name(test_name, test_type)
     
     def find_test_records_by_cell_name(self, cell_name: str):
         """
@@ -202,7 +186,7 @@ class TestRecordService:
         return self.test_record_repository.find_by_keyword(keyword)
 
 
-    def delete_test_record(self, test_name: str):
+    def delete_test_record(self, test_name: str, test_type: str):
         """
         This method deletes a TestRecord from the database.
 
@@ -210,8 +194,10 @@ class TestRecordService:
         ----------
         test_name : str
             The name of the test record to delete
+        test_type : str
+            The type of the test record to delete
         """
-        test_record = self.test_record_repository.find_by_name(test_name)
+        test_record = self.test_record_repository.find_by_name(test_name, test_type)
         if test_record:
             self.test_record_repository.delete(test_record)
             self.test_record_repository.commit()

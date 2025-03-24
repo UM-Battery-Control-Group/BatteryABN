@@ -92,6 +92,8 @@ class Parser:
         """
  
         biologic_raw_df, start_time = self.__load_mpr(file_path)
+        if biologic_raw_df is None:
+            return
         # Add the timestamp column
         total_time = pd.to_timedelta(biologic_raw_df['time/s'])
         biologic_raw_df[Const.TIMESTAMP] = start_time + total_time
@@ -133,6 +135,8 @@ class Parser:
         """
         vdf_df, vdf_meta = self.__load_vdf_csv(file_path)
 
+        if vdf_df is None or vdf_meta is None:
+            return
         # Store raw test data
         self.raw_test_data = vdf_df
         # Store raw metadata
@@ -358,7 +362,8 @@ class Parser:
 
         # Check if the data start marker was not found
         if start_line is None:
-            raise ValueError(f"Failed to find data start marker in vdf csv file {file_path}")
+            logger.error(f"Data start marker not found in {file_path}")
+            return None, None
 
         try:
         # Read the DataFrame, assuming the first row of data contains units
@@ -373,8 +378,9 @@ class Parser:
             vdf_df = pd.read_csv(file_path, delimiter='\t', skiprows=start_line + 2, header=None, names=new_header)
 
             logger.info(f"Loaded vdf csv file from {file_path} successfully")
-        except:
-            raise ValueError(f"Failed to read vdf data from {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to read vdf data from {file_path}: {e}")
+            return None, None
         
         return vdf_df, vdf_meta
 
@@ -411,8 +417,9 @@ class Parser:
 
             return df, start_time
         
-        except Exception:
-            raise ValueError(f"Failed to load mpr file from {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to load mpr file from {file_path}: {e}")
+            return None, None
         
     def __read_cellpy(self, file_path: str):
         """

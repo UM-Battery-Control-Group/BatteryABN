@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_injector import inject
 from batteryabn.services import TestRecordService
 
@@ -22,7 +22,9 @@ def get_tr_by_name(test_name: str, test_record_service: TestRecordService):
     """
     Get a specific test record by its name.
     """
-    test_record = test_record_service.find_test_record_by_name(test_name)
+    # Get test type from parameters
+    test_type = request.args.get('test_type')
+    test_record = test_record_service.find_test_record_by_name(test_name, test_type)
     if not test_record:
         return jsonify({"error": "Test record not found"}), 404
     return jsonify(test_record.to_dict())
@@ -44,7 +46,8 @@ def get_tr_metadata(test_name: str, test_record_service: TestRecordService):
     """
     Get the metadata of a specific test record by its name.
     """
-    test_record = test_record_service.find_test_record_by_name(test_name)
+    test_type = request.args.get('test_type')
+    test_record = test_record_service.find_test_record_by_name(test_name, test_type)
     if not test_record:
         return jsonify({"error": "Test record not found"}), 404
     return jsonify(test_record.get_test_metadata())
@@ -55,7 +58,8 @@ def get_tr_data(test_name: str, test_record_service: TestRecordService):
     """
     Get the data of a specific test record by its name.
     """
-    test_record = test_record_service.find_test_record_by_name(test_name)
+    test_type = request.args.get('test_type')
+    test_record = test_record_service.find_test_record_by_name(test_name, test_type)
     if not test_record:
         return jsonify({"error": "Test record not found"}), 404
     data = test_record.get_test_data()
