@@ -428,6 +428,7 @@ class Processor:
             logger.error(f"Error processing {tr.test_name}: failed to match charge discharge")
             pass
 
+        logger.info(f"{tr.test_name}: protocol {protocal}, {len(charge_start_idxs)} charge cycles, {len(discharge_start_idxs)} discharge cycles")
         # Add aux cycle indicators to df. Column of True if start of a cycle, otherwise False. 
         # Set default cycle indicator = charge start 
         for indicator in Const.INDICATORS:
@@ -465,6 +466,7 @@ class Processor:
                 t_end = cycle_metrics[Const.TIMESTAMP].iloc[i+1]
             i_subcycle = df[Const.CURRENT][(t > t_start) & (t < t_end)]
             data_idx = cycle_metrics.index.tolist()[i]
+            df[Const.PROTOCOL] = df[Const.PROTOCOL].astype(str)
             if is_cap_check:
                 hours_delta = (t_end - t_start).total_seconds() / 3600
                 # hppc: ID by # of types of current sign changes (threshold is arbitrary)
@@ -774,9 +776,11 @@ class Processor:
 
         cell_rpt_data_list = []  # Use a list to collect dataframes to concatenate later
 
+        logger.info(f"Found {len(rpt_filename_to_idxs)} RPT files")
+
         for rpt_file, rpt_idxs in rpt_filename_to_idxs.items():
             # Mark as the previous rpt cycle
-            pre_rpt_subcycle = pd.DataFrame()
+            pre_rpt_subcycle = {}
 
             for i in rpt_idxs:
                 t_start = self.cell_cycle_metrics.at[i, Const.TIMESTAMP] - pd.Timedelta(milliseconds=30)
@@ -792,11 +796,13 @@ class Processor:
                 self.update_cycle_metrics_hppc(rpt_subcycle, i)
 
                 # Process ESOH data for the charge and discharge cycles
-                if not pre_rpt_subcycle.empty:
+                if pre_rpt_subcycle:
                     protocols = {rpt_subcycle[Const.PROTOCOL], pre_rpt_subcycle[Const.PROTOCOL]}
                     if protocols == {Const.C20_CHARGE, Const.C20_DISCHARGE}:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
-                        pre_rpt_subcycle = pd.DataFrame()
+                        pre_rpt_subcycle = {}
+                elif rpt_subcycle[Const.PROTOCOL] in {Const.C20_CHARGE, Const.C20_DISCHARGE}: 
+                    pre_rpt_subcycle = rpt_subcycle.copy()
                 
                 t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s').dt.tz_localize('UTC').dt.tz_convert(Const.DEFAULT_TIME_ZONE)
                 t_start = pd.to_datetime(t_start)
@@ -882,6 +888,8 @@ class Processor:
         # Skip the Formation data
         if '_F_' in rpt_subcycle[Const.RPT]:
             return        
+
+        logger.info(f"Processing eSOH for {rpt_subcycle[Const.TEST_NAME]}")
 
         if pre_rpt_subcycle[Const.PROTOCOL] == Const.C20_CHARGE:
             dh_subcycle = rpt_subcycle
