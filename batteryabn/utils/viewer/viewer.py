@@ -174,7 +174,8 @@ class Viewer:
         cycle_idx = cell_data[cell_data[Const.CYCLE_IDC]].index
         capacity_check_idx = cell_data[cell_data[Const.CAPACITY_CHECK_IDC]].index
         # TODO
-        cycle_vdf_idx = cell_data_vdf[cell_data_vdf[Const.CYCLE_IDC]].index
+        filtered_df = cell_data_vdf[vdf_filter_idx]
+        cycle_vdf_idx = filtered_df[filtered_df[Const.CYCLE_IDC]].index
         capacity_check_in_cycle_idx = cell_cycle_metrics[cell_cycle_metrics[Const.CAPACITY_CHECK_IDC]].index
         charge_idx = cell_data[cell_data[Const.CHARGE_CYCLE_IDC]].index
 
