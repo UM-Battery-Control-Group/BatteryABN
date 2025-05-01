@@ -170,7 +170,12 @@ class Processor:
             logger.debug("No cycler expansion data found")
             return pd.DataFrame(columns = Const.VDF_COLUMNS)
         
-        cell_data_vdf = pd.concat(dfs, ignore_index=True).sort_values(by=Const.TIMESTAMP)
+        # Check if the dataframes has TIMESTAMP column, drop if not
+        selected_dfs = [df for df in dfs if not df.empty and Const.TIMESTAMP in df.columns]
+        if len(selected_dfs) == 0:
+            logger.error("No valid cycler expansion data found")
+            return pd.DataFrame(columns = Const.VDF_COLUMNS)
+        cell_data_vdf = pd.concat(selected_dfs, ignore_index=True).sort_values(by=Const.TIMESTAMP)
 
         return cell_data_vdf
     
@@ -291,13 +296,20 @@ class Processor:
         charge_cycle_idxs = list(cell_cycle_metrics[cell_cycle_metrics[Const.CHARGE_CYCLE_IDC]].index)
         discharge_cycle_idxs = list(cell_cycle_metrics[cell_cycle_metrics[Const.DISCHARGE_CYCLE_IDC]].index) 
         cycle_idxs = list(cell_cycle_metrics[cell_cycle_metrics[Const.CYCLE_IDC]].index) # align with charge start
-        for i,j in enumerate(charge_cycle_idxs): 
+        # Cut the len of q_c and q_d to match the charge and discharge cycle indexes
+        q_c, q_d = q_c[:len(charge_cycle_idxs)], q_d[:len(discharge_cycle_idxs)]
+        i_avg_c, i_avg_d = i_avg_c[:len(charge_cycle_idxs)], i_avg_d[:len(discharge_cycle_idxs)]
+        v_max, v_min = v_max[:len(cycle_idxs)], v_min[:len(cycle_idxs)]
+        for i in range(len(q_c)):
+            j = charge_cycle_idxs[i]
             cell_cycle_metrics.loc[j, Const.CHARGE_CAPACITY] = q_c[i]
-            cell_cycle_metrics.loc[j, Const.AVG_CYCLE_CHARGE_CURRENT] = i_avg_c[i]  
-        for i,j in enumerate(discharge_cycle_idxs): 
+            cell_cycle_metrics.loc[j, Const.AVG_CYCLE_CHARGE_CURRENT] = i_avg_c[i]
+        for i in range(len(q_d)):
+            j = discharge_cycle_idxs[i]
             cell_cycle_metrics.loc[j, Const.DISCHARGE_CAPACITY] = q_d[i]
-            cell_cycle_metrics.loc[j, Const.AVG_CYCLE_DISCHARGE_CURRENT] = i_avg_d[i]  
-        for i,j in enumerate(cycle_idxs): 
+            cell_cycle_metrics.loc[j, Const.AVG_CYCLE_DISCHARGE_CURRENT] = i_avg_d[i]
+        for i in range(len(v_max)):
+            j = cycle_idxs[i] 
             cell_cycle_metrics.loc[j, Const.MIN_CYCLE_VOLTAGE] = v_min[i] 
             cell_cycle_metrics.loc[j, Const.MAX_CYCLE_VOLTAGE] = v_max[i] 
             cell_cycle_metrics.loc[j, Const.MIN_CYCLE_TEMP] = temp_min[i] 
@@ -422,11 +434,11 @@ class Processor:
         )
 
         charge_start_idxs, discharge_start_idxs = self.find_cycle_idxs(t, i)
-        try: # won't work for half cycles (files with only charge or only discharge)
-            charge_start_idxs, discharge_start_idxs = self.match_charge_discharge(charge_start_idxs, discharge_start_idxs)
-        except:
-            logger.error(f"Error processing {tr.test_name}: failed to match charge discharge")
-            pass
+        # try: # won't work for half cycles (files with only charge or only discharge)
+        charge_start_idxs, discharge_start_idxs = self.match_charge_discharge(charge_start_idxs, discharge_start_idxs)
+        # except Exception as e:
+        #     logger.error(f"Error processing {tr.test_name}: failed to match charge discharge: {e}")
+        #     pass
 
         logger.info(f"{tr.test_name}: protocol {protocal}, {len(charge_start_idxs)} charge cycles, {len(discharge_start_idxs)} discharge cycles")
         # Add aux cycle indicators to df. Column of True if start of a cycle, otherwise False. 
@@ -772,7 +784,7 @@ class Processor:
 
         cycle_summary_cols = [c for c in self.cell_cycle_metrics.columns if '(' in c] + [Const.TEST_NAME, Const.PROTOCOL]
 
-        i_c20 = project.get_i_c20() if project else Const.I_C20
+        i_c20 = project.get_i_c20() if project.get_i_c20() else Const.I_C20
 
         cell_rpt_data_list = []  # Use a list to collect dataframes to concatenate later
 
@@ -919,14 +931,16 @@ class Processor:
         """
         Method used for eSOH calculation
         """
-        d_ch = ch_rpt[Const.DATA][0]
-        d_dh = dh_rpt[Const.DATA][0]
+        logger.info(f"Type of ch_rpt: {type(ch_rpt)}")
+        logger.info(f"Type of ch_rpt data: {type(ch_rpt[Const.DATA])}")
+        d_ch = ch_rpt[Const.DATA]
+        d_dh = dh_rpt[Const.DATA]
         d_dh = d_dh.reset_index(drop=True)
         d_ch = d_ch.reset_index(drop=True)
         d_dh[Const.TIMESTAMP] = d_dh[Const.TIMESTAMP] - d_dh[Const.TIMESTAMP].iloc[0]
         d_ch[Const.TIMESTAMP] = d_ch[Const.TIMESTAMP] - d_ch[Const.TIMESTAMP].iloc[0]
-        d_ch = d_ch[d_ch[Const.TIMESTAMP] <= 1e8]
-        d_dh = d_dh[d_dh[Const.TIMESTAMP] <= 1e8]
+        d_ch = d_ch[(d_ch[Const.TIMESTAMP].dt.total_seconds()) <= 1e5]
+        d_dh = d_dh[(d_dh[Const.TIMESTAMP].dt.total_seconds()) <= 1e5]
         d_ch1 = d_ch[(d_ch[Const.CURRENT] > 0)] # charge current is + 
         d_dh1 = d_dh[(d_dh[Const.CURRENT] < 0)] # discharge current is - 
         d_ch = d_ch[(d_ch[Const.CURRENT] > (i_slow - i_threshold)) & (d_ch[Const.CURRENT] < (i_slow + i_threshold))]
@@ -940,18 +954,18 @@ class Processor:
         d_dh[Const.AHT] = d_dh[Const.AHT] - d_dh[Const.AHT].iloc[0]
 
         t_d = d_dh[Const.TIMESTAMP].to_numpy()
-        t_d = t_d - t_d[0]
-        t_d = t_d / 1e3 
+        t_d = (t_d - t_d[0]) / np.timedelta64(1, 's')
         i_d = d_dh[Const.CURRENT].to_numpy()
         v_d = d_dh[Const.VOLTAGE].to_numpy()
         q_d = integrate.cumtrapz(abs(i_d), t_d/3600)
         q_d = np.append(q_d,q_d[-1])
-        t_c = d_ch[Const.TIMESTAMP].to_numpy()
-        t_c = t_c - t_c[0]
-        t_c = t_c/1e3
         i_c = d_ch[Const.CURRENT].to_numpy()
-        v_c = d_ch[Const.VOLTAGE].to_numpy()
+        d_ch = d_ch[pd.to_numeric(d_ch[Const.VOLTAGE], errors='coerce').notnull()]
+        v_c = d_ch[Const.VOLTAGE].astype(float).to_numpy()
         ah_c = d_ch[Const.AHT].to_numpy()
+
+        t_c = d_ch[Const.TIMESTAMP].to_numpy()
+        t_c = (t_c - t_c[0]) / np.timedelta64(1, 's')
         q_c = integrate.cumtrapz(abs(i_c), t_c/3600)
         q_c = np.append(q_c, q_c[-1])
 
