@@ -25,7 +25,7 @@ function App() {
             <Route path="/cell/:cellName/images/:index" element={<CellImageDetail />} />
             <Route path="/trs" element={<TestRecordSearch />} />
             <Route path="/trs/:cellName" element={<TestRecordList />} />
-            <Route path="/tr/:trName" element={<TestRecordDetails />} />
+            <Route path="/tr/:trName/:trType" element={<TestRecordDetails />} />
             <Route path="/tasks" element={<TaskManager />} />
             <Route path="/tasks/status" element={<TaskStatus />} />
           </Routes>

@@ -24,7 +24,11 @@ export const getCellImageHtmls = async (name, index) => {
 export const getCellLatestCellInfo = (name) => axios.get(`${API_URL}/cells/${name}/info/latest`);
 
 export const getTestRecordsByCell = (name) => axios.get(`${API_URL}/trs/cell/${name}`);
-export const getTestRecordByName = (name) => axios.get(`${API_URL}/trs/${name}`);
+export const getTestRecord = ({ name, testType }) => 
+  axios.get(`${API_URL}/trs/${name}`, {
+    params: { test_type: testType }
+  });
+  
 export const getTestRecordsByKeyword = (keyword) => axios.get(`${API_URL}/trs/search/${keyword}`);
 
 export const getTasksStatus = () => axios.get(`${API_URL}/tasks/status`);

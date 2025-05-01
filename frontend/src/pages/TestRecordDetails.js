@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Typography, CircularProgress } from '@mui/material';
-import { getTestRecordByName } from '../services/api';
+import { getTestRecord } from '../services/api';
 import Layout from '../components/Layout';
 
 const TestRecordDetails = () => {
-  const { trName } = useParams();
+  const { trName, trType } = useParams();
   const [testRecord, setTestRecord] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTestRecordByName(trName)
+    getTestRecord(trName, trType)
       .then(response => {
         setTestRecord(response.data);
         setLoading(false);
@@ -19,7 +19,7 @@ const TestRecordDetails = () => {
         console.error("Error fetching test record:", error);
         setLoading(false);
       });
-  }, [trName]);
+  }, [trName, trType]);
 
   return (
     <Layout title="TESTRECORDS" subTitle={'TestRecord Detail'}>

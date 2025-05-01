@@ -44,7 +44,7 @@ const TestRecordList = () => {
             <Button
               key={record.test_name}
               component={Link}
-              to={`/tr/${record.test_name}`}
+              to={`/tr/${record.test_name}/${record.test_type}`}
               sx={{
                 backgroundColor: '#FFCB05',
                 color: '#00274C',
