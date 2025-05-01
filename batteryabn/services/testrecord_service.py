@@ -133,7 +133,12 @@ class TestRecordService:
 
         files = Utils.search_files(path, key_word, file_extensions)
         for file in files:
-            self.create_and_save_tr(file, parser, formatter, reset)
+            try:
+                self.create_and_save_tr(file, parser, formatter, reset)
+            except Exception as e:
+                logger.error(f'Failed to create and save test record from file: {file}. Error: {e}')
+                continue
+        logger.info(f'Finished creating and saving test records from files in {path}')
 
     def find_test_record_by_name(self, test_name: str, test_type: str):
         """

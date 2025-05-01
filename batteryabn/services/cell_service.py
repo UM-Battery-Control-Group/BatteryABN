@@ -56,7 +56,7 @@ class CellService:
 
         return cell
     
-    def process_cell(self, cell_name: str, processor: Processor, viewer: Viewer):
+    def process_cell(self, cell_name: str, processor: Processor, viewer: Viewer, test_type: str = None):
         """
         Process cell data and save it to the database.
 
@@ -66,6 +66,10 @@ class CellService:
             The cell to process
         processor : Processor
             Processor object with processed cell data
+        viewer : Viewer
+            Viewer object with plotting functions
+        test_type : str, optional
+            The type of test to process, by default None
         """
         cell = self.find_cell_by_name(cell_name)
         project = cell.project
@@ -74,7 +78,7 @@ class CellService:
             logger.error(f'Cell not found: {cell_name}')
             return
         
-        cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell)
+        cycler_trs, vdf_trs = self.get_cycler_vdf_trs(cell, test_type)        
         # Process cell data
         processor.process(cycler_trs, vdf_trs, cell.project)
         if processor.cell_data.empty:
@@ -131,7 +135,11 @@ class CellService:
             return
         
         for cell in cells:
-            self.process_cell(cell.cell_name, processor, viewer)
+            try:
+                self.process_cell(cell.cell_name, processor, viewer)
+            except Exception as e:
+                logger.error(f'Failed to process cell: {cell.cell_name}. Error: {e}')
+                continue
 
     def generate_cell_images_by_processed_data(self, cell_name: str, viewer: Viewer):
         """
@@ -308,7 +316,7 @@ class CellService:
             raise
 
 
-    def get_cycler_vdf_trs(self, cell: Cell):
+    def get_cycler_vdf_trs(self, cell: Cell, test_type: str = None):
         """
         Get cycler and Vdf test records for a cell.
 
@@ -316,6 +324,8 @@ class CellService:
         ----------
         cell : Cell
             The cell to get test records for
+        test_type : str, optional
+            The type of test record to get, by default None
 
         Returns
         -------
@@ -327,13 +337,15 @@ class CellService:
         trs = self.test_record_repository.find_by_cell_name(cell.cell_name)
         cycler_trs, vdf_trs = {}, {}
         for tr in trs:
-            # if tr.last_update_time is None:
-            #     #TODO: Maybe check more details if the test record contains data
-            #     continue
+            if tr.last_update_time is None:
+                #TODO: Maybe check more details if the test record contains data
+                continue
             if tr.test_type == Const.VDF:
                 vdf_trs[tr.test_name] = tr
-            else:
-                cycler_trs[tr.test_name] = tr
+            elif test_type is None or tr.test_type == test_type:
+                    cycler_trs[tr.test_name] = tr
+            else: 
+                logger.info(f'Skipping test record: {tr.test_name}')
         return cycler_trs, vdf_trs
 
     def find_cell_by_name(self, cell_name: str):
