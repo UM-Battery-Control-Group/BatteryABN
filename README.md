@@ -1,12 +1,13 @@
 #  BatteryABN
 
-BatteryABN is a Python module designed for parsing, formatting, and saving battery test data to a database. In addition to data handling, BatteryABN offers methods for processing battery data on a per-cell basis. It currently supports data from Neware and Neware Vdf sources.
+BatteryABN is a Python module designed for parsing, formatting, and saving battery test data to a database. In addition to data handling, BatteryABN offers methods for processing battery data on a per-cell basis. It currently supports data from Neware and Neware Vdf sources. For more details, check the md files in `docs` folder.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Dashboard](#dashboard)
 - [Design](#design)
 - [License](#license)
 - [Questions](#questions)
@@ -26,7 +27,7 @@ Data will be processed on a per-cell basis using methods provided by UMBCL. This
 
 ### Requirements
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - The required packages are listed in the `requirements.txt` file
 
 ### Installation Instructions
@@ -82,14 +83,51 @@ export PYTHONPATH="${PYTHONPATH}:/path/to/BatteryABN"
 The demos for BatteryABN are in the /examples folder. To use BatteryABN, access the test record service as shown in these examples.
 
 ```python
-session = Session()
-parser = Parser()
-formatter = Formatter()
-cell_repository = CellRepository(session)
-test_record_repository = TestRecordRepository(session)
-test_record_service = TestRecordService(cell_repository, test_record_repository)
-test_record_service.create_and_save_tr(path, parser, formatter)
+app = create_app()
+
+with app.app_context():
+    db.create_all()
+    parser = Parser()
+    formatter = Formatter()
+    cell_repository = CellRepository()
+    test_record_repository = TestRecordRepository()
+    test_record_service = TestRecordService(cell_repository, test_record_repository, project_repository)
+    test_record_service.create_and_save_tr(path, parser, formatter)
 ```
+
+## Dashboard
+
+This dashboard consists of a Flask backend and a React frontend. Follow the steps below to run the application.
+
+### 🚀 Quick Start (Manual)
+
+#### 1. Start the Backend
+
+```bash
+cd batteryabn
+flask run
+```
+
+#### 2. Start the Flask-RQ Worker
+
+```bash
+flask rq worker
+```
+#### 3. Start the Frontend
+
+```bash
+cd frontend
+npm start
+```
+
+### 🐳 Docker (Alternative)
+You can also start both frontend and backend using Docker and Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+This will automatically build and start all necessary services.
 
 ## Design
 
@@ -100,7 +138,7 @@ The BatteryABN project models its domain using two primary classes: TestRecord a
 The TestRecord class is designed to store detailed information about individual battery tests. Each test record includes several fields:
 
 id: A unique identifier for each test record (primary key).
-test_name: The name of the battery test, which uniquely identifies each test.
+test_name: The name of the battery test, not unique because the different test type could share same name.
 test_type: Specifies the type of battery test (e.g., 'Arbin', 'BioLogic', 'Neware', 'Vdf'), indicating the testing equipment or protocol used.
 cell_name: A foreign key linking the test record to its associated battery cell in the cells table.
 test_data: Stores the test data as a pickled Python object. This data typically includes time series measurements taken during the test.
