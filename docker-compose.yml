@@ -1,0 +1,57 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build: ./batteryabn
+    # user: "1001:1001"
+    ports:
+      - "5000:5000"
+    volumes:
+      - /Lab_share_Volt:/home/me-bcl/Lab_share_Volt
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_APP=batteryabn/app.py
+      - FLASK_RUN_HOST=0.0.0.0
+      - DATABASE_URI=postgresql://labadmin:bcl_password@172.17.0.1/lab_data
+      - SQLALCHEMY_DATABASE_URI=postgresql://labadmin:bcl_password@172.17.0.1/lab_data
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: ./batteryabn
+    # user: "1001:1001"
+    volumes:
+      - /Lab_share_Volt:/home/me-bcl/Lab_share_Volt
+    command: flask rq worker
+    environment:
+      - DATABASE_URL=postgresql://labadmin:bcl_password@172.17.0.1/lab_data
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=labadmin
+      - POSTGRES_PASSWORD=bcl_password
+      - POSTGRES_DB=lab_data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+  redis_data:
