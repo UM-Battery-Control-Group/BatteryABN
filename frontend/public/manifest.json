@@ -1,0 +1,18 @@
+{
+  "short_name": "UMBCL-DD",
+  "name": "University of Michigan - Battery Control Lab Data Dashboard",
+  "icons": [
+    {
+      "src": "um-logo.png",
+      "type": "image/png"
+    },
+    {
+      "src": "um-logo.png",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
