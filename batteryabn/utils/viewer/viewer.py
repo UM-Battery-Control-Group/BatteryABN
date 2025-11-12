@@ -153,7 +153,7 @@ class Viewer:
         aht = cell_data[Const.AHT]
 
         # Choose cell_data_vdf[Const.EXPANSION_UM] > -5000 to remove outliers
-        vdf_filter_idx = cell_data_vdf[Const.EXPANSION_UM] > -5000
+        vdf_filter_idx = cell_data_vdf[Const.EXPANSION_UM] > -5000 
         t_vdf = pd.to_datetime(cell_data_vdf[Const.TIMESTAMP][vdf_filter_idx], unit='ms', utc=True)
         t_vdf = t_vdf.dt.tz_convert(Const.DEFAULT_TIME_ZONE) 
         exp_vdf = cell_data_vdf[Const.EXPANSION_UM][vdf_filter_idx]
@@ -185,7 +185,7 @@ class Viewer:
 
         # Plot current 
         ax0 = axes.flat[0]
-        ax0.plot_date(t[0::downsample], i[0::downsample],'-')
+        ax0.plot_date(t[1::downsample], i[1::downsample],'-')
         ax0.plot_date(t[cycle_idx], i[cycle_idx], "x")
         ax0.plot_date(t[charge_idx], i[charge_idx], "o")
         ax0.plot_date(t[capacity_check_idx], i[capacity_check_idx], "*", c = "r")
