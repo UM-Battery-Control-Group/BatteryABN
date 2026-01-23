@@ -86,9 +86,12 @@ class CellService:
         # Genrate images for processed data
         img_cell, img_ccm, img_ccm_aht, img_cell_html, img_ccm_html, img_ccm_aht_html = viewer.plot(processor.cell_data, processor.cell_cycle_metrics, processor.cell_data_vdf, cell_name)
 
-        cell.calibration_c = processor.cell_data_vdf.iloc[-1][Const.CALIBRATION_C]
-        cell.calibration_x1 = processor.cell_data_vdf.iloc[-1][Const.CALIBRATION_X1]
-        cell.calibration_x2 = processor.cell_data_vdf.iloc[-1][Const.CALIBRATION_X2]
+        if not processor.cell_data_vdf.empty:
+            cell.calibration_c = processor.cell_data_vdf.iloc[-1][Const.CALIBRATION_C]
+            cell.calibration_x1 = processor.cell_data_vdf.iloc[-1][Const.CALIBRATION_X1]
+            cell.calibration_x2 = processor.cell_data_vdf.iloc[-1][Const.CALIBRATION_X2]
+        else:
+            logger.info('The cell_data_vdf DataFrame is empty.')
         # # Update cell data
         # cell.cell_data = Utils.gzip_pikle_dump(processor.cell_data)
         # cell.cell_cycle_metrics = Utils.gzip_pikle_dump(processor.cell_cycle_metrics)
@@ -109,9 +112,13 @@ class CellService:
         
         # Save data to local file
         self.filesystem_repository.save_df_to_csv(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
-        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data)
+        logger.info(f'Pickling cell_data for cell {cell_name}')
+        self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data', processor.cell_data) 
+        logger.info(f'Pickling cell_cycle_metrics for cell {cell_name}')
         self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_cycle_metrics', processor.cell_cycle_metrics)
+        logger.info(f'Pickling cell_data_vdf for cell {cell_name}')
         self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_vdf', processor.cell_data_vdf)
+        logger.info(f'Pickling cell_data_rpt for cell {cell_name}')
         self.filesystem_repository.save_to_local_pklgz(project.project_name, cell.cell_name, 'cell_data_rpt', processor.cell_data_rpt)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'cell', img_cell)
         self.filesystem_repository.save_plt_to_png(project.project_name, cell.cell_name, 'ccm', img_ccm)

@@ -271,6 +271,12 @@ class Constants:
             'nominal_capacity':2.5, #A.h
             'Qmax': 2.8,
             'I_C20': 0.125,
+        },
+        'LGM50LT':{
+            'pulse_currents':DEFAULT_PULSE_CURRENTS,
+            'nominal_capacity':4.8, #A.h
+            'Qmax': 5,
+            'I_C20': 0.24,
         }
     }
     CYCLE_ID_LIMS= {

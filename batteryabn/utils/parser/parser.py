@@ -119,8 +119,14 @@ class Parser:
         first_total_time = total_time[0]
         total_time = total_time - first_total_time
         neware_raw_df[Const.TIMESTAMP] = start_time + total_time
-        neware_raw_df.drop(columns=['t1(℃)'], inplace=True)
-        
+
+        try:
+            neware_raw_df.drop(columns=['t1(℃)'], inplace=True)
+        except KeyError:
+            logger.warning("Column 't1(℃)' not found in Neware data, dropping T1(℃) instead.")
+         #   neware_raw_df.drop(columns=['T1(℃)'], inplace=True)
+
+
         # Store raw test data
         self.raw_test_data = neware_raw_df
 

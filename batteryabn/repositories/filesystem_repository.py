@@ -35,7 +35,7 @@ class FileSystemRepository:
         # Save data to a local pkl.gz file
         file_path = os.path.join(cell_dir, f'{data_name}.pkl.gz')
         with gzip.open(file_path, 'wb') as f:
-            pickle.dump(data, f)
+            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         logger.info(f'Saved data to local file: {file_path}')
 
