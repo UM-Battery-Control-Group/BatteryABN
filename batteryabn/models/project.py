@@ -19,7 +19,8 @@ class Project(db.Model):
         """
         Get the total Qmax for the project.
         """
-        return self.qmax if self.qmax else Const.QMAX
+        #return self.qmax if self.qmax else Const.QMAXN
+        return self.qmax if self.qmax else Const.PROJECTS_SETTING[self.project_name]['Qmax']
 
     def get_i_c20(self):
         """

@@ -270,7 +270,7 @@ class Processor:
         pd.DataFrame
             Processed cycler cycle metrics
         """
-        cell_data, cell_cycle_metrics = self.combine_cycler_data(trs)
+        cell_data, cell_cycle_metrics = self.combine_cycler_data(trs,project)
 
         if cell_data is None or cell_cycle_metrics is None:
             return None, None
@@ -317,7 +317,7 @@ class Processor:
 
         return cell_data, cell_cycle_metrics
 
-    def combine_cycler_data(self, trs: dict):
+    def combine_cycler_data(self, trs: dict, project: Project):
         """
         Combine cycler data from multiple files into a single dataframe.
         Concatenate data frames, identify cycles based on rests (I=0), then calculate min and max voltage and temperature for each cycle.
@@ -340,7 +340,7 @@ class Processor:
         pre_aht = 0
         for name, tr in trs.items():
             logger.info(f"Processing cycler data for {name}")
-            df = self.process_cycle_tr(tr, pre_aht)
+            df = self.process_cycle_tr(tr, pre_aht,project)
             if df.empty:
                 logger.warning(f"No data found for {name}")
                 continue
@@ -382,8 +382,8 @@ class Processor:
         logger.info(f"Found {len(cell_data)} cell data, {len(cell_cycle_metrics)} cycles")
 
         return cell_data, cell_cycle_metrics
-            
-    def process_cycle_tr(self, tr: TestRecord, pre_aht: float):
+
+    def process_cycle_tr(self, tr: TestRecord, pre_aht: float, project: Project):
         """
         Process and format cycle data for a single test record.
 
@@ -418,7 +418,9 @@ class Processor:
         t = df[Const.TIMESTAMP].reset_index(drop=True)
         i = df[Const.CURRENT].reset_index(drop=True)
         protocal = tr.get_cycle_type()
-        lims = Const.CYCLE_ID_LIMS[protocal]
+        lims = Const.CYCLE_ID_LIMS[protocal] # Siegeljb to fix 1/25/2026, these need to be per project. 
+
+        qmax = project.get_qmax()
 
         # These parameters could be used to filter cycle index in the future
         v = df[Const.VOLTAGE].reset_index(drop=True)
@@ -486,10 +488,10 @@ class Processor:
                 if len(np.where(np.diff(np.sign(i_subcycle)))[0]) > 10:
                     df.loc[data_idx, Const.PROTOCOL] = Const.HPPC
                 # C/20 charge: longer than 8 hrs and mean(I)>0. Will ID C/10 during formation as C/20...
-                elif hours_delta > 8 and np.mean(i_subcycle) > 0 and np.mean(i_subcycle) < Const.QMAX / 18:
+                elif hours_delta > 8 and np.mean(i_subcycle) > 0 and np.mean(i_subcycle) < qmax / 18:
                     df.loc[data_idx, Const.PROTOCOL] = Const.C20_CHARGE
                 # C/20 discharge: longer than 8 hrs and mean(I)<0. Will ID C/10 during formation as C/20...
-                elif hours_delta > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - Const.QMAX / 18:
+                elif hours_delta > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - qmax / 18:
                     df.loc[data_idx, Const.PROTOCOL] = Const.C20_DISCHARGE
 
         return df
@@ -785,7 +787,7 @@ class Processor:
 
         cycle_summary_cols = [c for c in self.cell_cycle_metrics.columns if '(' in c] + [Const.TEST_NAME, Const.PROTOCOL]
 
-        i_c20 = project.get_i_c20() if project.get_i_c20() else Const.I_C20
+        i_c20 = project.get_i_c20() if project.get_i_c20() else Const.I_C20N
 
         cell_rpt_data_list = []  # Use a list to collect dataframes to concatenate later
 

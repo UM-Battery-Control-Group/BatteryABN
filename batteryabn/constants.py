@@ -87,7 +87,7 @@ class Constants:
         "Channel Number"
     ]
 
-    CYCLE_TYPES = ['CYC', 'RPT', 'Test11', 'EIS', 'CAL', '_F']
+    CYCLE_TYPES = ['_RPT','_CYC','Test11', 'EIS', 'CAL', '_F']
 
     V_MAX_CYCLE = 'v_max_cycle'
     V_MIN_CYCLE = 'v_min_cycle'
@@ -156,7 +156,7 @@ class Constants:
     RPT = 'RPT #'
     DATA = 'Data'
     DATA_VDF = 'Data VDF'
-    RPT_TYPES = ['RPT', '_F', '_Cy100', '_Cby100']
+    RPT_TYPES = ['_RPT', '_F', '_Cy100', '_Cby100']
 
     #-------HPPC-------#
     PULSE_CURRENT = 'pulse current'
@@ -232,8 +232,15 @@ class Constants:
 #------------------------------------Numeric:------------------------------------#
     DEFAULT_TIME_ZONE = "America/New_York"
 
-    QMAX = 3.8
-    I_C20 = 0.177
+    QMAXN = 3.8
+    I_C20N = 0.177
+
+    QMAXN = 5.0
+    I_C20N = 0.25
+
+    # QMAXN = 2.6
+    # I_C20N = 0.13
+
 
     #------------------------Project Setting---------------------------#
     # TODO: These values should be placed in a configuration yaml or json file
@@ -266,6 +273,12 @@ class Constants:
             'Qmax': 3.8,
             'I_C20': 0.177,
         },
+        'GMFEB23S':{
+            'pulse_currents':GMFEB23_PULSE_CURRENTS,
+            'nominal_capacity':2.5, #A.h
+            'Qmax': 2.6,
+            'I_C20': 0.13,
+        },
         'UMBL2022FEB':{
             'pulse_currents':UMBL2022FEB_PULSE_CURRENTS,
             'nominal_capacity':2.5, #A.h
@@ -280,11 +293,12 @@ class Constants:
         }
     }
     CYCLE_ID_LIMS= {
-    'CYC': {V_MAX_CYCLE:3.8, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.1}, # Default values for cycle type
-    'RPT': {V_MAX_CYCLE:4.1, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.1},
-    'Test11': {V_MAX_CYCLE:3.6, V_MIN_CYCLE:3.6, DT_MIN: 600, DAH_MIN:0.1},
+    '_CYC': {V_MAX_CYCLE:3.8, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.1}, # Default values for cycle type
+    '_RPT': {V_MAX_CYCLE:4.1, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.1},
+    '_Test11': {V_MAX_CYCLE:3.6, V_MIN_CYCLE:3.6, DT_MIN: 600, DAH_MIN:0.1},
+    '_EIS': {V_MAX_CYCLE:4.1, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.5}, # same as RPT, but says EIS in the filenames for some GM cells
     'EIS': {V_MAX_CYCLE:4.1, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.5}, # same as RPT, but says EIS in the filenames for some GM cells
-    'CAL': {V_MAX_CYCLE:3.8, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.5},
+    '_CAL': {V_MAX_CYCLE:3.8, V_MIN_CYCLE:3.8, DT_MIN: 600, DAH_MIN:0.5},
     '_F': {V_MAX_CYCLE:3.8, V_MIN_CYCLE:3.8, DT_MIN: 3600, DAH_MIN:0.5} # Formation files handled via peak finding
     }
 

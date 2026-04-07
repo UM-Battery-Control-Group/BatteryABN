@@ -47,9 +47,14 @@ with app.app_context():
 
     cellNames = ['LGM50T21700_CELL001']
 
-    cellNames = ['LGM50LT_CELL004']
-    # cellNames = ['LGM50_CELL003']
-    cellNames = [f'LGM50LT_CELL{cell:03d}' for cell in [4,17,18,19,35,36,37,38,39,40,41,42]] 
+    cellNames = ['LGM50LT_CELL005']
+
+    umbl_cell_nums = [19,55,11]
+    cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in umbl_cell_nums] 
+    # cellNames = [f'LGM50LT_CELL{cell:03d}' for cell in range(1,100)] #range(10,46)] 
+    #cellNames=['LGM50LT_CELL005','LGM50LT_CELL006','LGM50LT_CELL007']
+# 5,6,7,8,9,10,20,21,22
+    #cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in [19,55,11]] 
 
     for key_word in cellNames: 
         test_record_service.create_and_save_trs(data_directory, key_word=key_word, parser=parser, formatter=formatter,  reset=True)#file_extensions=['csv'],

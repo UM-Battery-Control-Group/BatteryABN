@@ -19,8 +19,8 @@ if __name__ == "__main__":
 
         viewer=Viewer()
         # cell_name = 'SANDIATENERGY_CELL002'
-        cell_name = 'UMBL2022FEB_CELL152001'
-        cell_name ='LGM50LT_CELL004'
+       # cell_name = 'UMBL2022FEB_CELL152001'
+        cell_name ='LGM50LT_CELL005'
         # cell_name = 'GMJULY2022_CELL042'
         # Load the proecssed data for the cell
         cell = cell_service.find_cell_by_name(cell_name)
