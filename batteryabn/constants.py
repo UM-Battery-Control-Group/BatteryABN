@@ -108,6 +108,8 @@ class Constants:
     HPPC = 'HPPC'
     C20_CHARGE = 'C/20 Charge'
     C20_DISCHARGE = 'C/20 Discharge'
+    C10_CHARGE = 'C/10 Charge'
+    C10_DISCHARGE = 'C/10 Discharge'
 
     MIN_CYCLE_VOLTAGE = 'min cycle voltage (v)' 
     MAX_CYCLE_VOLTAGE = 'max cycle voltage (v)'

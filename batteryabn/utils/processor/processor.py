@@ -493,6 +493,12 @@ class Processor:
                 # C/20 discharge: longer than 8 hrs and mean(I)<0. Will ID C/10 during formation as C/20...
                 elif hours_delta > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - qmax / 18:
                     df.loc[data_idx, Const.PROTOCOL] = Const.C20_DISCHARGE
+                # C/10 charge: longer than 8 hrs and mean(I)>0. Will ID C/10 during formation as C/20...
+                elif hours_delta > 8 and np.mean(i_subcycle) > 0 and np.mean(i_subcycle) < qmax / 8:
+                    df.loc[data_idx, Const.PROTOCOL] = Const.C10_CHARGE
+                # C/10 discharge: longer than 8 hrs and mean(I)<0. Will ID C/10 during formation as C/20...
+                elif hours_delta > 8 and np.mean(i_subcycle) < 0 and np.mean(i_subcycle) > - qmax / 8:
+                    df.loc[data_idx, Const.PROTOCOL] = Const.C10_DISCHARGE
 
         return df
 
@@ -525,7 +531,7 @@ class Processor:
         dt = np.diff(t_seconds)
 
         # Cumah = Ah_Charge - Ah_Discharge
-        cumah = integrate.cumtrapz(i, t_seconds, initial=0) / 3600  # s to hours
+        cumah = integrate.cumulative_trapezoid(i, t_seconds, initial=0) / 3600  # s to hours
         # Calculate the average discharge current and average time until the next charge step
         cumah = cumah - cumah.min()
         # Check for large gaps in the data, and reset the cumah counter.
@@ -816,7 +822,10 @@ class Processor:
                     if protocols == {Const.C20_CHARGE, Const.C20_DISCHARGE}:
                         self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20)
                         pre_rpt_subcycle = {}
-                elif rpt_subcycle[Const.PROTOCOL] in {Const.C20_CHARGE, Const.C20_DISCHARGE}: 
+                    elif protocols == {Const.C10_CHARGE, Const.C10_DISCHARGE}:
+                        self.update_cycle_metrics_esoh(rpt_subcycle, pre_rpt_subcycle, i, i_c20/2)
+                        pre_rpt_subcycle = {}
+                elif rpt_subcycle[Const.PROTOCOL] in {Const.C20_CHARGE, Const.C20_DISCHARGE,Const.C10_CHARGE, Const.C10_DISCHARGE}: 
                     pre_rpt_subcycle = rpt_subcycle.copy()
                 
                 t_vdf = pd.to_datetime(self.cell_data_vdf[Const.TIMESTAMP] / 1000, unit='s').dt.tz_localize('UTC').dt.tz_convert(Const.DEFAULT_TIME_ZONE)
@@ -906,7 +915,7 @@ class Processor:
 
         logger.info(f"Processing eSOH for {rpt_subcycle[Const.TEST_NAME]}")
 
-        if pre_rpt_subcycle[Const.PROTOCOL] == Const.C20_CHARGE:
+        if pre_rpt_subcycle[Const.PROTOCOL] == Const.C20_CHARGE or pre_rpt_subcycle[Const.PROTOCOL] == Const.C10_CHARGE:
             dh_subcycle = rpt_subcycle
             ch_subcycle = pre_rpt_subcycle
         else:
@@ -958,7 +967,7 @@ class Processor:
         t_d = (t_d - t_d[0]) / np.timedelta64(1, 's')
         i_d = d_dh[Const.CURRENT].to_numpy()
         v_d = d_dh[Const.VOLTAGE].to_numpy()
-        q_d = integrate.cumtrapz(abs(i_d), t_d/3600)
+        q_d = integrate.cumulative_trapezoid(abs(i_d), t_d/3600)
         q_d = np.append(q_d,q_d[-1])
         i_c = d_ch[Const.CURRENT].to_numpy()
         d_ch = d_ch[pd.to_numeric(d_ch[Const.VOLTAGE], errors='coerce').notnull()]
@@ -967,7 +976,7 @@ class Processor:
 
         t_c = d_ch[Const.TIMESTAMP].to_numpy()
         t_c = (t_c - t_c[0]) / np.timedelta64(1, 's')
-        q_c = integrate.cumtrapz(abs(i_c), t_c/3600)
+        q_c = integrate.cumulative_trapezoid(abs(i_c), t_c/3600)
         q_c = np.append(q_c, q_c[-1])
 
         ## Normalizing from SOC=100

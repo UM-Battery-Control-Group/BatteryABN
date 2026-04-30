@@ -14,7 +14,7 @@ class Project(db.Model):
     cells = db.relationship("Cell", back_populates="project")
     qmax = db.Column(db.Float)
     i_c20 = db.Column(db.Float)
-
+    
     def get_qmax(self):
         """
         Get the total Qmax for the project.
@@ -26,7 +26,7 @@ class Project(db.Model):
         """
         Get the total I_C20 for the project.
         """
-        return self.i_c20
+        return self.i_c20 if self.i_c20 else Const.PROJECTS_SETTING[self.project_name]['I_C20']
 
     def to_dict(self):
         """

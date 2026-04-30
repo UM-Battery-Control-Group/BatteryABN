@@ -60,11 +60,11 @@ if __name__ == "__main__":
         # missing_cells = ['UMBL2022FEB_CELL151802','UMBL2022FEB_CELL151803','UMBL2022FEB_CELL151804','UMBL2022FEB_CELL151805','UMBL2022FEB_CELL151806']
         #missing_cells = ['LGM50LT_CELL004']
 
-        missing_cells =[f'LGM50LT_CELL{cell:03d}' for cell in [4,17,18,19,35,36,37,38,39,40,41,42]]
-        #missing_cells =[f'LGM50LT_CELL{cell:03d}' for cell in range(1,60)]
+        #missing_cells =[f'LGM50LT_CELL{cell:03d}' for cell in [4,17,18,19,35,36,37,38,39,40,41,42]]
+        missing_cells =[f'LGM50LT_CELL{cell:03d}' for cell in range(1,60)]
         #missing_cells = ['LGM50LT_CELL019']
         # umbl_cell_nums = [151802,151803,151804,151805,151806,152001,152002,152004,152005,152006,152007,152008,152009,152010,152011,152012,152013,152014,152015,152016,152017,152018,152019,152020,152021,152023,152026,152027,152028,152029,152030,152031,152032,152064,152071,152098]
-        
+        # cell_service.process_cell('LGM50LT_CELL019', processor, viewer)
         # umbl_cell_nums = [152002]
         # missing_cells = [f'UMBL2022FEB_CELL{cell:03d}' for cell in umbl_cell_nums] 
 
@@ -86,15 +86,15 @@ if __name__ == "__main__":
        # missing_cells = [f'GMFEB23S_CELL{cell:03d}' for cell in [19,55,11]] 
         # missing_cells = [f'LGM50LT_CELL{cell:03d}' for cell in [5,6,7,8,9,10,20,21,22]]
        # missing_cells = ['LGM50LT_CELL003','LGM50LT_CELL004','LGM50LT_CELL005','LGM50LT_CELL011']
-        missing_cells = ['LGM50LT_CELL005']
+        # missing_cells = ['LGM50LT_CELL005']
+        # missing_cells = ['GMFEB23S_CELL020']
 
-
-        umbl_cell_nums = [19,55,11]
-        missing_cells = [f'GMFEB23S_CELL{cell:03d}' for cell in umbl_cell_nums] 
+        # umbl_cell_nums = [19,55,11]
+        # missing_cells = [f'GMFEB23S_CELL{cell:03d}' for cell in umbl_cell_nums] 
 
       #  cell_service.process_cell('GMFEB23S_CELL019', processor, viewer)
 
-        # run with progress bar
+        ##run with progress bar
         with multiprocessing.Pool(processes = multiprocessing.cpu_count() - 3) as pool:
             results = []
             for result in tqdm(pool.imap_unordered(process_cell_in_parallel, missing_cells),

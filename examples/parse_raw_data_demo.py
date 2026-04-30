@@ -45,19 +45,20 @@ with app.app_context():
     # umbl_cell_nums = [152001,152002,152004,152005]
     cellNames = [f'UMBL2022FEB_CELL{cell:03d}' for cell in umbl_cell_nums] 
 
-    cellNames = ['LGM50T21700_CELL001']
+    # cellNames = ['LGM50T21700_CELL001']
 
-    cellNames = ['LGM50LT_CELL005']
+    # cellNames = ['LGM50LT_CELL005']
 
-    umbl_cell_nums = [19,55,11]
-    cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in umbl_cell_nums] 
-    # cellNames = [f'LGM50LT_CELL{cell:03d}' for cell in range(1,100)] #range(10,46)] 
+    # umbl_cell_nums = [19,55,11]
+    # cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in umbl_cell_nums] 
+    cellNames = [f'LGM50LT_CELL{cell:03d}' for cell in range(1,100)] #range(10,46)] 
     #cellNames=['LGM50LT_CELL005','LGM50LT_CELL006','LGM50LT_CELL007']
 # 5,6,7,8,9,10,20,21,22
     #cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in [19,55,11]] 
+    # cellNames = ['GMFEB23S_CELL020']
 
     for key_word in cellNames: 
-        test_record_service.create_and_save_trs(data_directory, key_word=key_word, parser=parser, formatter=formatter,  reset=True)#file_extensions=['csv'],
+        test_record_service.create_and_save_trs(data_directory, key_word=key_word, parser=parser, formatter=formatter,  reset=True)#,file_extensions=['csv'],
 
     # missing_ids = [i for i in range(1, 5)]
     # for cell in missing_ids:
