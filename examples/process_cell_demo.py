@@ -95,7 +95,7 @@ if __name__ == "__main__":
       #  cell_service.process_cell('GMFEB23S_CELL019', processor, viewer)
 
         ##run with progress bar
-        with multiprocessing.Pool(processes = multiprocessing.cpu_count() - 3) as pool:
+        with multiprocessing.Pool(processes = multiprocessing.cpu_count() - 1) as pool:
             results = []
             for result in tqdm(pool.imap_unordered(process_cell_in_parallel, missing_cells),
                             total=len(missing_cells),

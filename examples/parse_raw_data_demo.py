@@ -1,14 +1,38 @@
+import multiprocessing
 import os
 from batteryabn.repositories import TestRecordRepository, CellRepository, ProjectRepository
 from batteryabn.services import TestRecordService
 from batteryabn.utils import Parser, Formatter
 from batteryabn.app import create_app
 from batteryabn.extensions import db
+from tqdm import tqdm
 
 current_directory = os.path.dirname(__file__)
 calibration_parameters_path = './sanity_check.csv'
 
-app = create_app()
+def process_cell_in_parallel(cell_name):
+    try:
+        app = create_app()
+        with app.app_context():
+            db.create_all()
+            data_directory = f'/data/'
+           
+            parser = Parser()
+            formatter = Formatter()
+            cell_repository = CellRepository()
+            test_record_repository = TestRecordRepository()
+            project_repository = ProjectRepository()
+            test_record_service = TestRecordService(cell_repository, test_record_repository, project_repository)
+
+            parser.parse_calibration_parameters(calibration_parameters_path)
+            formatter.format_calibration_parameters(parser.calibration_parameters)
+            test_record_service.create_and_save_trs(data_directory, key_word=cell_name, parser=parser, formatter=formatter,  reset=True)#,file_extensions=['csv'],
+
+    except Exception as e:
+        print(f"Error processing cell {cell_name}: {e}")
+
+if __name__ == "__main__":
+    app = create_app()
 
 with app.app_context():
     db.create_all()
@@ -57,8 +81,17 @@ with app.app_context():
     #cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in [19,55,11]] 
     # cellNames = ['GMFEB23S_CELL020']
 
-    for key_word in cellNames: 
-        test_record_service.create_and_save_trs(data_directory, key_word=key_word, parser=parser, formatter=formatter,  reset=True)#,file_extensions=['csv'],
+ #   for key_word in cellNames: 
+#       test_record_service.create_and_save_trs(data_directory, key_word=key_word, parser=parser, formatter=formatter,  reset=True)#,file_extensions=['csv'],
+
+
+    with multiprocessing.Pool(processes = multiprocessing.cpu_count() - 1) as pool:
+            results = []
+            for result in tqdm(pool.imap_unordered(process_cell_in_parallel, cellNames),
+                            total=len(cellNames),
+                            desc="Processing cells",
+                            unit="cell"):
+                results.append(result)
 
     # missing_ids = [i for i in range(1, 5)]
     # for cell in missing_ids:
