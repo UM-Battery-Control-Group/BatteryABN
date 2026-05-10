@@ -719,7 +719,7 @@ class Processor:
             if time_delta > 0:
                 cycle_data = data[start_idx:end_idx]
                 cycle_time = time_stamps[start_idx:end_idx]
-                average = np.trapz(cycle_data, cycle_time) / time_delta
+                average = np.trapz(cycle_data, cycle_time) / time_delta #check and replace code with
             else:
                 average = 0
             

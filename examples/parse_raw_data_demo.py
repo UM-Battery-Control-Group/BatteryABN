@@ -51,7 +51,7 @@ with app.app_context():
 
     # umbl_cell_nums = [19,55,11]
     # cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in umbl_cell_nums] 
-    cellNames = [f'LGM50LT_CELL{cell:03d}' for cell in range(1,100)] #range(10,46)] 
+    cellNames = [f'LGM50LT_CELL{cell:03d}' for cell in range(1,47)] #range(10,46)] 
     #cellNames=['LGM50LT_CELL005','LGM50LT_CELL006','LGM50LT_CELL007']
 # 5,6,7,8,9,10,20,21,22
     #cellNames = [f'GMFEB23S_CELL{cell:03d}' for cell in [19,55,11]] 

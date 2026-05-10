@@ -100,7 +100,7 @@ class Formatter:
         if not isinstance(time_reset[0], pd.Timestamp):
             time_reset = pd.to_datetime(time_reset, unit='ms')
         current_reset = df[Const.CURRENT].reset_index(drop=True)
-        aht_calculated = integrate.cumtrapz(
+        aht_calculated = integrate.cumulative_trapezoid(
             abs(current_reset), 
             (time_reset - time_reset[0]).dt.total_seconds(),
         ) / 3600
